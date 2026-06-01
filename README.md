@@ -1,5 +1,7 @@
 # K-Weather AIVM 온체인 기상 데이터 오라클 인프라
 
+**🛰️ 라이브 데모: https://kweather-aivm-oracle-wellbianlabs.vercel.app**
+
 케이웨더(K-Weather) 프리미엄 API의 고정밀 국지성 기상 데이터를 AIVM/EVM 호환 네트워크에
 **온체인 오라클**로 공급하고, 자율형 AI 에이전트가 구독/종량제로 안전하게 소비하도록 하는
 참조 구현(reference implementation)입니다. (PRD 기반)
