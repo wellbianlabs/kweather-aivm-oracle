@@ -6,6 +6,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["--yes", "serve", "web", "-l", "4321"],
       "port": 4321
+    },
+    {
+      "name": "weblive",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["scripts/dev-server.cjs"],
+      "port": 4322
     }
   ]
 }

@@ -35,7 +35,7 @@
 
   <!-- HERO -->
   <section class="hero">
-    <div class="hero-badge"><span class="dot"></span> 브라우저 내 라이브 시뮬레이션 · 실제 컨트랙트/오라클 노드는 저장소에</div>
+    <div class="hero-badge"><span class="dot"></span> 실시간 날씨(Open-Meteo · 키 설정 시 케이웨더 프리미엄) 기반 라이브 데모</div>
     <h1>AI 에이전트가 가장 신뢰하는<br /><span class="grad">아시아 최대 온체인 정밀 기상 인프라</span></h1>
     <p class="hero-sub">
       케이웨더 프리미엄 API의 고정밀 국지성 기상 데이터를 EVM/AIVM 호환 네트워크에 온체인 오라클로 공급하고,
@@ -165,8 +165,9 @@
       <div>
         <div class="f-brand">🛰️ KWeather × AIVM Oracle</div>
         <p class="f-note">
-          본 페이지는 브라우저 내 결정론적 시뮬레이션입니다. 실제 Solidity 컨트랙트(KWeatherOracle / SubscriptionManager),
-          오라클 노드, 7개 통과 테스트는 GitHub 저장소에 있습니다. 실데이터 모드는 실제 케이웨더 게이트웨이 규약을 사용합니다.
+          기상 데이터는 <b>실시간</b>입니다 — `/api/weather` 서버리스 프록시가 Open-Meteo(키 설정 시 케이웨더 프리미엄)에서
+          최근 24시간 실측값을 가져옵니다. 온체인 결제·구독 정산은 데모용 시뮬레이션이며, 실제 Solidity 컨트랙트
+          (KWeatherOracle / SubscriptionManager), 오라클 노드, 7개 통과 테스트는 GitHub 저장소에 있습니다.
         </p>
       </div>
       <a id="ghLinkFoot" class="f-gh" href="#" target="_blank" rel="noopener">소스 보기 on GitHub ↗</a>
