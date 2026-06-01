@@ -1,0 +1,13 @@
+# proprietary reference source (Wellbian frontend) — kept local, never published
+reference/
+
+node_modules/
+artifacts/
+cache/
+coverage/
+coverage.json
+typechain-types/
+.env
+deployments.*.json
+!deployments.example.json
+npm-debug.log*

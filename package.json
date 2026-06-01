@@ -1,0 +1,21 @@
+{
+  "name": "kweather-aivm-oracle",
+  "version": "0.1.0",
+  "description": "K-Weather Premium API based on-chain weather data oracle infrastructure for the AIVM ecosystem",
+  "license": "MIT",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "demo": "hardhat run scripts/demo.js",
+    "deploy:local": "hardhat run scripts/deploy.js --network localhost",
+    "node": "hardhat node",
+    "relayer": "node scripts/relayer-service.js"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.22.17"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  }
+}

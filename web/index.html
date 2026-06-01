@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KWeather × AIVM — 온체인 기상 데이터 오라클</title>
+  <meta name="description" content="케이웨더 프리미엄 API 기반 AIVM 온체인 기상 데이터 오라클 인프라. 실시간 인터랙티브 데모." />
+  <meta property="og:title" content="KWeather × AIVM 온체인 기상 오라클" />
+  <meta property="og:description" content="케이웨더 프리미엄 기상 데이터를 AI 에이전트가 신뢰하는 온체인 오라클로." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛰️</text></svg>" />
+</head>
+<body>
+  <div class="bg-grid"></div>
+
+  <!-- NAV -->
+  <header class="nav">
+    <div class="nav-inner">
+      <div class="brand">
+        <span class="brand-mark">🛰️</span>
+        <span class="brand-text">KWeather <span class="x">×</span> AIVM <span class="brand-sub">Oracle</span></span>
+      </div>
+      <nav class="nav-links">
+        <a href="#pipeline">파이프라인</a>
+        <a href="#feed">라이브 피드</a>
+        <a href="#agents">AI 에이전트</a>
+        <a href="#money">수익화</a>
+        <a id="ghLink" class="nav-gh" href="#" target="_blank" rel="noopener">GitHub ↗</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-badge"><span class="dot"></span> 브라우저 내 라이브 시뮬레이션 · 실제 컨트랙트/오라클 노드는 저장소에</div>
+    <h1>AI 에이전트가 가장 신뢰하는<br /><span class="grad">아시아 최대 온체인 정밀 기상 인프라</span></h1>
+    <p class="hero-sub">
+      케이웨더 프리미엄 API의 고정밀 국지성 기상 데이터를 EVM/AIVM 호환 네트워크에 온체인 오라클로 공급하고,
+      자율형 AI 에이전트가 구독·종량제로 안전하게 소비합니다.
+    </p>
+    <div class="okr">
+      <span class="chip">실시간 온체인 피드</span>
+      <span class="chip">시계열·텐서 친화 포맷</span>
+      <span class="chip">호출당 과금 / 구독</span>
+      <span class="chip">TEE 기반 API Key 보안</span>
+    </div>
+  </section>
+
+  <!-- CONTROL BAR -->
+  <section class="controls" id="controls">
+    <div class="ctrl-row">
+      <div class="ctrl-time">
+        <label>관측 시각 (UTC) <strong id="hourLabel">12:00</strong></label>
+        <input id="hourSlider" type="range" min="0" max="23" value="12" />
+      </div>
+      <button id="playBtn" class="btn-play">▶ 자동 재생</button>
+      <div class="ctrl-meta">
+        <span class="meta-pill">데이터 소스 <b>MOCK</b></span>
+        <span class="meta-pill">관측망 <b>3,559개 읍면동</b></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- PIPELINE -->
+  <section class="pipeline" id="pipeline">
+    <h2 class="sec-title">온체인 오라클 파이프라인</h2>
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-ico">🌦️</div>
+        <div class="flow-name">케이웨더 프리미엄 API</div>
+        <div class="flow-desc">Web2 JSON · 부동소수점</div>
+        <code class="flow-code" id="flowRaw">temp 23.45 ℃</code>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-ico">🔒</div>
+        <div class="flow-name">오라클 노드 (TEE)</div>
+        <div class="flow-desc">정제 · 고정소수점 스케일링</div>
+        <code class="flow-code" id="flowScaled">×100 → 2345</code>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-ico">⛓️</div>
+        <div class="flow-name">온체인 레지스트리</div>
+        <div class="flow-desc">지역코드 O(1) · 시계열 링버퍼</div>
+        <code class="flow-code">pushBatch()</code>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-ico">🤖</div>
+        <div class="flow-name">AI 에이전트</div>
+        <div class="flow-desc">구독/종량제 미터링 쿼리</div>
+        <code class="flow-code">queryHistory()</code>
+      </div>
+    </div>
+  </section>
+
+  <!-- LIVE FEED -->
+  <section class="feed" id="feed">
+    <h2 class="sec-title">라이브 온체인 기상 피드 <span class="sec-sub">5개 지역 · 고정소수점 정수</span></h2>
+    <div class="region-grid" id="regionGrid"></div>
+  </section>
+
+  <!-- STRUCT + SCALING -->
+  <section class="struct-sec">
+    <div class="struct-grid">
+      <div class="struct-card">
+        <h3>온체인 데이터 구조체 <span class="sec-sub" id="structRegion"></span></h3>
+        <pre class="code-block" id="structCode"></pre>
+      </div>
+      <div class="struct-card">
+        <h3>플로트 → 고정소수점 변환</h3>
+        <div class="scale-table" id="scaleTable"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AGENTS -->
+  <section class="agents" id="agents">
+    <h2 class="sec-title">자율 AI 에이전트의 온체인 의사결정</h2>
+    <div class="agent-grid">
+      <div class="agent-card energy">
+        <div class="agent-head"><span class="agent-ico">⚡</span><div><div class="agent-name">신재생 에너지 예측</div><div class="agent-tag">구독 모델 · PRD §4.1</div></div></div>
+        <div class="agent-body" id="energyBody"></div>
+      </div>
+      <div class="agent-card agri">
+        <div class="agent-head"><span class="agent-ico">🌾</span><div><div class="agent-name">애그리테크 트레이딩</div><div class="agent-tag">종량제 · PRD §4.2</div></div></div>
+        <div class="agent-body" id="agriBody"></div>
+      </div>
+      <div class="agent-card logi">
+        <div class="agent-head"><span class="agent-ico">🚚</span><div><div class="agent-name">물류 · 배송 보험</div><div class="agent-tag">종량제 · PRD §4.3</div></div></div>
+        <div class="agent-body" id="logiBody"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MONETIZATION -->
+  <section class="money" id="money">
+    <h2 class="sec-title">수익화 · 가입형 가스비 구조</h2>
+    <div class="money-grid">
+      <div class="money-card">
+        <div class="money-k">구독 (Subscription)</div>
+        <div class="money-v">100 <span>KWT / 월</span></div>
+        <div class="money-d">월 1,000 쿼리 한도(레이트리밋) 내 자유 호출</div>
+      </div>
+      <div class="money-card">
+        <div class="money-k">종량제 (Pay-per-query)</div>
+        <div class="money-v">1 <span>KWT / 호출</span></div>
+        <div class="money-d">1회성 정밀 분석용 · 선불 예치 후 호출당 차감</div>
+      </div>
+      <div class="money-card accent">
+        <div class="money-k">Treasury 누적 정산</div>
+        <div class="money-v"><span id="treasury">110</span> <span>KWT</span></div>
+        <div class="money-d">에이전트 결제가 트레저리로 자동 집계</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div>
+        <div class="f-brand">🛰️ KWeather × AIVM Oracle</div>
+        <p class="f-note">
+          본 페이지는 브라우저 내 결정론적 시뮬레이션입니다. 실제 Solidity 컨트랙트(KWeatherOracle / SubscriptionManager),
+          오라클 노드, 7개 통과 테스트는 GitHub 저장소에 있습니다. 실데이터 모드는 실제 케이웨더 게이트웨이 규약을 사용합니다.
+        </p>
+      </div>
+      <a id="ghLinkFoot" class="f-gh" href="#" target="_blank" rel="noopener">소스 보기 on GitHub ↗</a>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
