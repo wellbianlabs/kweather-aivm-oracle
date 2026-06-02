@@ -228,6 +228,7 @@ function main() {
   $("regionSel").innerHTML = REGIONS.map((r) => `<option value="${r.code}">${r.name}</option>`).join("");
   if (!CFG) { notDeployed(); return; }
   $("netBadge").textContent = `${CFG.chainName} · 실제 온체인`;
+  $("walletHint").textContent = `${CFG.chainName} 지갑(MetaMask 등)을 연결하세요. 가스비는 테스트넷 ${CFG.currency || "ETH"}입니다.`;
   initReadOnly();
   $("connectBtn").addEventListener("click", connect);
   $("faucetBtn").addEventListener("click", faucet);

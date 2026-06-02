@@ -1,6 +1,18 @@
 # K-Weather AIVM 온체인 기상 데이터 오라클 인프라
 
 **🛰️ 라이브 데모: https://kweather-aivm-oracle-wellbianlabs.vercel.app**
+**⛓️ 온체인 dApp (BNB Smart Chain Testnet): https://kweather-aivm-oracle-wellbianlabs.vercel.app/dapp**
+
+### 배포된 컨트랙트 (BSC Testnet, chainId 97)
+| 컨트랙트 | 주소 |
+|---|---|
+| KWeatherOracle | [`0x62FFc95E32052B7Fdd6E969fc645e3F134Fd2F3C`](https://testnet.bscscan.com/address/0x62FFc95E32052B7Fdd6E969fc645e3F134Fd2F3C) |
+| SubscriptionManager | [`0xA34D6B699f16ed574A574a3E2b18ce063da4d911`](https://testnet.bscscan.com/address/0xA34D6B699f16ed574A574a3E2b18ce063da4d911) |
+| KWT 토큰 | [`0x04090599Dbaa990eabC37fFBDE223A4eD02e5b20`](https://testnet.bscscan.com/address/0x04090599Dbaa990eabC37fFBDE223A4eD02e5b20) |
+
+릴레이어(`/api/relay`, 매시 정각 크론)가 실날씨를 온체인에 발행하고, 자율 AI 에이전트
+(`/api/agent`, 매시 30분 크론)가 스스로 구독 결제 후 온체인 쿼리를 실행합니다. 누구나 지갑을
+연결해 KWT를 받고 구독·종량제로 결제한 뒤 온체인 쿼리를 할 수 있습니다.
 
 케이웨더(K-Weather) 프리미엄 API의 고정밀 국지성 기상 데이터를 AIVM/EVM 호환 네트워크에
 **온체인 오라클**로 공급하고, 자율형 AI 에이전트가 구독/종량제로 안전하게 소비하도록 하는
