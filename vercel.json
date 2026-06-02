@@ -1,9 +1,13 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "installCommand": "echo 'no deps needed for static site'",
+  "installCommand": "npm install --omit=dev",
   "buildCommand": "echo 'static site — nothing to build'",
   "outputDirectory": "web",
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "crons": [
+    { "path": "/api/relay", "schedule": "0 * * * *" },
+    { "path": "/api/agent", "schedule": "30 * * * *" }
+  ]
 }

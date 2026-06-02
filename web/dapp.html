@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KWeather × AIVM — 온체인 dApp (Base Sepolia)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛰️</text></svg>" />
+  <style>
+    .dapp { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+    .card-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 22px; }
+    .panel h3 { font-size: 15px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+    .panel .hint { font-size: 12.5px; color: var(--muted); margin-bottom: 14px; }
+    .kv { display: flex; justify-content: space-between; font-size: 13px; padding: 5px 0; }
+    .kv .k { color: var(--muted); }
+    .kv .v { font-family: var(--mono); font-weight: 600; }
+    .btn { background: linear-gradient(135deg, var(--brand), var(--brand-2)); color: #061018; border: none; font-weight: 700; font-size: 13.5px; padding: 10px 16px; border-radius: 10px; cursor: pointer; transition: filter .2s, transform .15s; }
+    .btn:hover { filter: brightness(1.08); transform: translateY(-1px); }
+    .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+    .btn.ghost { background: transparent; color: var(--text); border: 1px solid var(--line); }
+    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+    select, input { background: #0a1120; color: var(--text); border: 1px solid var(--line); border-radius: 9px; padding: 9px 12px; font-size: 13px; font-family: inherit; }
+    .mono { font-family: var(--mono); }
+    a.ext { color: var(--brand); text-decoration: none; }
+    a.ext:hover { text-decoration: underline; }
+    .log { font-family: var(--mono); font-size: 12px; background: #0a1120; border: 1px solid var(--line); border-radius: 10px; padding: 12px; max-height: 200px; overflow-y: auto; white-space: pre-wrap; line-height: 1.6; color: #cdd8ee; }
+    .pill { font-size: 11px; padding: 3px 9px; border-radius: 7px; border: 1px solid var(--line); color: var(--muted); }
+    .ok { color: var(--accent); } .bad { color: var(--danger); } .warn { color: var(--warn); }
+    .addr { font-family: var(--mono); font-size: 11.5px; color: var(--brand-2); }
+    @media (max-width: 820px) { .card-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="bg-grid"></div>
+
+  <header class="nav">
+    <div class="nav-inner">
+      <div class="brand"><span class="brand-mark">🛰️</span><span class="brand-text">KWeather <span class="x">×</span> AIVM <span class="brand-sub">dApp</span></span></div>
+      <nav class="nav-links">
+        <a href="/">라이브 데모</a>
+        <a id="oracleLink" class="ext" href="#" target="_blank">오라클 컨트랙트 ↗</a>
+        <button id="connectBtn" class="btn">지갑 연결</button>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero" style="padding-bottom:18px">
+    <div class="hero-badge"><span class="dot"></span> <span id="netBadge">Base Sepolia 테스트넷 · 실제 온체인</span></div>
+    <h1 style="font-size:clamp(26px,4.5vw,40px)">실제 온체인 기상 오라클 <span class="grad">dApp</span></h1>
+    <p class="hero-sub">컨트랙트가 Base Sepolia에 배포되어 있고, 릴레이어가 실제 날씨를 온체인에 발행합니다. 지갑을 연결해 KWT를 받고 구독·종량제로 결제한 뒤 온체인 쿼리를 실행하세요. AI 에이전트 봇도 자율적으로 결제·사용합니다.</p>
+  </section>
+
+  <main class="dapp">
+    <!-- status -->
+    <div class="panel" style="margin-bottom:16px">
+      <h3>📡 배포 상태</h3>
+      <div id="statusBody">로딩…</div>
+    </div>
+
+    <div class="card-grid">
+      <!-- wallet -->
+      <div class="panel">
+        <h3>👛 내 지갑</h3>
+        <div class="hint">Base Sepolia 테스트넷 지갑(MetaMask 등)을 연결하세요. 가스비는 테스트넷 ETH입니다.</div>
+        <div id="walletBody"><div class="kv"><span class="k">상태</span><span class="v warn">미연결</span></div></div>
+        <div class="btn-row">
+          <button id="faucetBtn" class="btn" disabled>KWT 받기 (1,000)</button>
+        </div>
+      </div>
+
+      <!-- access / payment -->
+      <div class="panel">
+        <h3>💳 결제 · 접근권</h3>
+        <div class="hint">구독(월정액) 또는 종량제(선불)로 쿼리 권한을 얻습니다.</div>
+        <div id="accessBody"><div class="kv"><span class="k">구독</span><span class="v">—</span></div></div>
+        <div class="btn-row">
+          <button id="subBtn" class="btn" disabled>구독하기 (100 KWT/월)</button>
+          <button id="prepayBtn" class="btn ghost" disabled>종량제 예치 (10 KWT)</button>
+        </div>
+      </div>
+
+      <!-- query -->
+      <div class="panel">
+        <h3>🔎 온체인 기상 쿼리</h3>
+        <div class="hint">미터링된 <span class="mono">queryLatest</span> 트랜잭션 — 구독/종량제에서 1회 차감됩니다.</div>
+        <div class="btn-row" style="margin-bottom:12px">
+          <select id="regionSel"></select>
+          <button id="queryBtn" class="btn" disabled>온체인 조회 (결제)</button>
+          <button id="peekBtn" class="btn ghost">무료 미리보기</button>
+        </div>
+        <div id="queryResult" class="log">아직 조회하지 않았습니다.</div>
+      </div>
+
+      <!-- agent -->
+      <div class="panel">
+        <h3>🤖 자율 AI 에이전트</h3>
+        <div class="hint">에이전트 봇 지갑이 스스로 구독·결제하고 온체인 쿼리로 발전량을 예측합니다.</div>
+        <div class="btn-row" style="margin-bottom:12px">
+          <button id="agentBtn" class="btn">에이전트 실행/조회</button>
+          <button id="relayBtn" class="btn ghost">릴레이어: 지금 갱신</button>
+        </div>
+        <div id="agentResult" class="log">에이전트 활동을 불러오려면 버튼을 누르세요.</div>
+      </div>
+    </div>
+
+    <p style="color:var(--muted);font-size:12px;margin:22px 0 60px">
+      ⚠️ 테스트넷 데모입니다. KWT는 무가치 테스트 토큰이며 가스비는 Base Sepolia 테스트넷 ETH입니다.
+      모든 거래는 <a id="explorerFoot" class="ext" href="#" target="_blank">BaseScan</a>에서 검증할 수 있습니다.
+    </p>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+  <script src="dapp-config.js"></script>
+  <script src="abi.js"></script>
+  <script src="dapp.js"></script>
+</body>
+</html>

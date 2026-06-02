@@ -126,11 +126,24 @@ contract KWeatherOracle {
         return _readHistory(regionCode, count);
     }
 
-    // --------- ops views (owner / relayer only, unmetered) ---------
+    // --------- public views (free, unmetered) ---------
 
+    /// @notice Free read of the latest record for a region. On-chain data is public, so
+    ///         this is open for UX/transparency; the metered `queryLatest`/`queryHistory`
+    ///         path is what autonomous agents pay for (verifiable on-chain consumption,
+    ///         rate-limited SLA, and an auditable WeatherQueried event for dependent
+    ///         contracts such as parametric insurance).
     function peekLatest(uint256 regionCode) external view returns (KWeatherPremiumData memory) {
-        require(relayers[msg.sender] || msg.sender == owner, "KW: ops only");
         return _ring[regionCode][_latestIndex(regionCode)];
+    }
+
+    /// @notice Free read of the last `count` records (chronological) for a region.
+    function peekHistory(uint256 regionCode, uint256 count)
+        external
+        view
+        returns (KWeatherPremiumData[] memory)
+    {
+        return _readHistory(regionCode, count);
     }
 
     function observationCount(uint256 regionCode) external view returns (uint256) {
