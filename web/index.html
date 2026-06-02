@@ -37,16 +37,16 @@
   <!-- HERO -->
   <section class="hero">
     <div class="hero-badge"><span class="dot"></span> 실시간 날씨(Open-Meteo · 키 설정 시 케이웨더 프리미엄) 기반 라이브 데모</div>
-    <h1>AI 에이전트가 가장 신뢰하는<br /><span class="grad">아시아 최대 온체인 정밀 기상 인프라</span></h1>
+    <h1>AI 에이전트가 가장 신뢰하는<br /><span class="grad">전 세계 온체인 정밀 기상 인프라</span></h1>
     <p class="hero-sub">
-      케이웨더 프리미엄 API의 고정밀 국지성 기상 데이터를 EVM/AIVM 호환 네트워크에 온체인 오라클로 공급하고,
-      자율형 AI 에이전트가 구독·종량제로 안전하게 소비합니다.
+      전 세계 <strong>5,400개 도시</strong>의 실시간 기상 데이터를 EVM/AIVM 호환 네트워크에 온체인 오라클로 공급하고,
+      자율형 AI 에이전트가 구독·종량제로 안전하게 소비합니다. (글로벌: Open-Meteo · 한국: 케이웨더 프리미엄)
     </p>
     <div class="okr">
+      <span class="chip">🌏 전 세계 5,400개 도시</span>
       <span class="chip">실시간 온체인 피드</span>
-      <span class="chip">시계열·텐서 친화 포맷</span>
       <span class="chip">호출당 과금 / 구독</span>
-      <span class="chip">TEE 기반 API Key 보안</span>
+      <span class="chip">시계열·텐서 친화 포맷</span>
     </div>
   </section>
 
@@ -60,7 +60,7 @@
       <button id="playBtn" class="btn-play">▶ 자동 재생</button>
       <div class="ctrl-meta">
         <span class="meta-pill">데이터 소스 <b id="srcPill">로딩…</b></span>
-        <span class="meta-pill">관측망 <b>3,559개 읍면동</b></span>
+        <span class="meta-pill">판매 카탈로그 <b>전 세계 5,400개 도시</b></span>
       </div>
     </div>
   </section>
@@ -101,7 +101,11 @@
 
   <!-- LIVE FEED -->
   <section class="feed" id="feed">
-    <h2 class="sec-title">라이브 온체인 기상 피드 <span class="sec-sub">5개 지역 · 고정소수점 정수</span></h2>
+    <h2 class="sec-title">전 세계 도시 실시간 기상 피드 <span class="sec-sub">판매 가능 5,400개 도시 · 도시명으로 검색</span></h2>
+    <div class="city-search">
+      <input id="citySearch" type="text" placeholder="🔎 도시 검색 (예: Tokyo, London, Paris, Dubai…) — 5,400개 도시" autocomplete="off" />
+      <div id="searchResults" class="search-results"></div>
+    </div>
     <div class="region-grid" id="regionGrid"></div>
   </section>
 
@@ -175,6 +179,8 @@
     </div>
   </footer>
 
+  <script src="cities.js"></script>
+  <script src="featured.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

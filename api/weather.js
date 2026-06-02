@@ -25,7 +25,9 @@ module.exports = async (req, res) => {
     if (!series.length) return res.status(502).json({ error: "no data from upstream" });
 
     let source = "open-meteo";
-    if (process.env.KWEATHER_API_KEY && req.query.code) {
+    // K-Weather premium overlay only for Korean 법정동 codes (10 digits). Global cities
+    // use a GeoNames id (<= 8 digits) and stay on Open-Meteo.
+    if (process.env.KWEATHER_API_KEY && req.query.code && /^\d{10}$/.test(String(req.query.code))) {
       try {
         const kw = await kweatherFor(String(req.query.code));
         if (kw) {

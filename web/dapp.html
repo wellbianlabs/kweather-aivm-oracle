@@ -83,11 +83,15 @@
 
       <!-- query -->
       <div class="panel">
-        <h3>🔎 온체인 기상 쿼리</h3>
-        <div class="hint">미터링된 <span class="mono">queryLatest</span> 트랜잭션 — 구독/종량제에서 1회 차감됩니다.</div>
+        <h3>🔎 전 세계 도시 온체인 쿼리</h3>
+        <div class="hint">전 세계 5,400개 도시 중 검색 — 온체인에 없으면 릴레이어가 즉시 발행 후 미터링 <span class="mono">queryLatest</span>로 결제·조회합니다.</div>
+        <div style="position:relative;margin-bottom:10px">
+          <input id="citySearch2" type="text" placeholder="🔎 도시 검색 (예: Tokyo, Paris…) — 5,400개" autocomplete="off" style="width:100%" />
+          <div id="searchResults2" class="search-results" style="left:0;right:0;top:46px"></div>
+        </div>
         <div class="btn-row" style="margin-bottom:12px">
           <select id="regionSel"></select>
-          <button id="queryBtn" class="btn" disabled>온체인 조회 (결제)</button>
+          <button id="queryBtn" class="btn" disabled>온체인 발행 & 결제 조회</button>
           <button id="peekBtn" class="btn ghost">무료 미리보기</button>
         </div>
         <div id="queryResult" class="log">아직 조회하지 않았습니다.</div>
@@ -114,6 +118,8 @@
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
   <script src="dapp-config.js"></script>
   <script src="abi.js"></script>
+  <script src="cities.js"></script>
+  <script src="featured.js"></script>
   <script src="dapp.js"></script>
 </body>
 </html>

@@ -116,6 +116,26 @@ section, header, footer { position: relative; z-index: 1; }
 .flow-code { display: inline-block; margin-top: 12px; font-family: var(--mono); font-size: 12px; color: var(--brand); background: rgba(56,189,248,.08); border: 1px solid rgba(56,189,248,.2); padding: 5px 10px; border-radius: 8px; }
 .flow-arrow { align-self: center; color: var(--brand-2); font-size: 24px; font-weight: 700; }
 
+/* CITY SEARCH */
+.city-search { max-width: 1180px; margin: 0 auto 16px; padding: 0 24px; position: relative; }
+.city-search input {
+  width: 100%; background: var(--panel); color: var(--text);
+  border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px;
+  font-size: 15px; font-family: inherit; outline: none; transition: border-color .2s;
+}
+.city-search input:focus { border-color: var(--brand); }
+.city-search input::placeholder { color: var(--muted); }
+.search-results {
+  display: none; position: absolute; left: 24px; right: 24px; top: 60px; z-index: 30;
+  background: var(--panel-solid); border: 1px solid var(--line); border-radius: 12px;
+  overflow: hidden; box-shadow: 0 20px 50px -15px rgba(0,0,0,.6);
+}
+.search-results .sres { padding: 11px 18px; font-size: 14px; cursor: pointer; display: flex; justify-content: space-between; }
+.search-results .sres:hover { background: rgba(56,189,248,.1); }
+.search-results .sres .cc { color: var(--muted); font-family: var(--mono); font-size: 12px; }
+.rcard-code .rm { color: var(--danger); cursor: pointer; }
+.rcard-code .rm:hover { text-decoration: underline; }
+
 /* REGION GRID */
 .region-grid { max-width: 1180px; margin: 0 auto; padding: 0 24px; display: grid; grid-template-columns: repeat(auto-fill, minmax(216px, 1fr)); gap: 16px; }
 .rcard {

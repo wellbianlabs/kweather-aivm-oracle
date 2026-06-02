@@ -2,13 +2,15 @@
 "use strict";
 
 const CFG = window.DAPP_CONFIG;
-const REGIONS = [
-  { code: 1168000000, name: "서울 강남구" },
-  { code: 2611000000, name: "부산 중구" },
-  { code: 4617000000, name: "전남 나주시" },
-  { code: 4380000000, name: "충북 영동군" },
-  { code: 5011000000, name: "제주 제주시" },
-];
+const CITIES = (window.CITIES || []).map(([id, name, cc, lat, lon]) => ({ id, name, cc, lat, lon }));
+const CITY_BY_ID = new Map(CITIES.map((c) => [c.id, c]));
+const FEATURED = (window.FEATURED || []).map((f) => ({ id: f.id, name: f.name, cc: f.country, lat: f.lat, lon: f.lon }));
+const LEGACY = { 1168000000: "서울 강남구", 2611000000: "부산 중구", 4617000000: "전남 나주시", 4380000000: "충북 영동군", 5011000000: "제주 제주시" };
+function cityName(code) {
+  const c = CITY_BY_ID.get(Number(code));
+  if (c) return `${c.name}, ${c.cc}`;
+  return LEGACY[code] || `region #${code}`;
+}
 
 let provider, signer, account;
 let token, sm, oracle; // signer-connected
@@ -61,7 +63,7 @@ async function refreshStatus() {
           temp = d.temperature.toFixed(1) + "℃";
           ts = d.timestamp;
         }
-        const name = REGIONS.find((r) => r.code === Number(code))?.name || code;
+        const name = cityName(code);
         const when = ts ? new Date(ts * 1000).toLocaleString("ko-KR", { hour: "2-digit", minute: "2-digit", month: "numeric", day: "numeric" }) : "데이터 없음";
         return `<div class="kv"><span class="k">${name} <span class="addr">#${cnt}</span></span><span class="v">${temp} <span class="addr">${when}</span></span></div>`;
       })
@@ -157,7 +159,7 @@ async function prepay() {
 }
 
 function renderWeather(code, d, extra) {
-  const name = REGIONS.find((r) => r.code === Number(code))?.name || code;
+  const name = cityName(code);
   return (
     `[${name}] @ ${new Date(d.timestamp * 1000).toLocaleString("ko-KR")}\n` +
     `기온 ${d.temperature.toFixed(1)}℃ · 습도 ${d.humidity}% · 강수 ${d.precipitation}mm\n` +
@@ -168,9 +170,18 @@ function renderWeather(code, d, extra) {
 }
 
 async function query() {
-  const code = $("regionSel").value;
-  await withBusy($("queryBtn"), "온체인 결제·조회 중…", async () => {
-    const data = unscale(await oracle.queryLatest.staticCall(code)); // read decoded result
+  const code = Number($("regionSel").value);
+  await withBusy($("queryBtn"), "처리 중…", async () => {
+    // publish on-demand if this city has no on-chain data yet
+    const cnt = await roOracle.observationCount(code);
+    if (cnt === 0n) {
+      const c = CITY_BY_ID.get(code);
+      if (!c) throw new Error("카탈로그에 없는 도시라 발행할 수 없습니다.");
+      $("queryResult").textContent = `온체인에 없음 → 릴레이어가 ${c.name} 발행 중…`;
+      const rj = await (await fetch(`/api/relay?id=${code}&lat=${c.lat}&lon=${c.lon}`)).json();
+      if (rj.error) throw new Error("발행 실패: " + rj.error);
+    }
+    const data = unscale(await oracle.queryLatest.staticCall(code)); // decoded result
     const tx = await oracle.queryLatest(code); // metered tx (consume quota / pay)
     $("queryResult").textContent = renderWeather(code, data, `tx 전송됨: ${tx.hash}\n확정 대기 중…`);
     const receipt = await tx.wait();
@@ -178,6 +189,7 @@ async function query() {
       renderWeather(code, data).replace(/\n/g, "<br>") +
       `<br><span class="ok">✓ 결제·조회 완료</span> · <a class="ext" href="${txLink(tx.hash)}" target="_blank">tx ↗</a> (block ${receipt.blockNumber})`;
     await refreshWallet();
+    refreshStatus();
   });
 }
 
@@ -224,8 +236,37 @@ async function relayNow() {
   });
 }
 
+function selectCityOption(c) {
+  const sel = $("regionSel");
+  if (!Array.from(sel.options).some((o) => Number(o.value) === c.id)) {
+    sel.add(new Option(`${c.name}, ${c.cc}`, String(c.id)));
+  }
+  sel.value = String(c.id);
+}
+function wireDappSearch() {
+  const box = $("citySearch2"), list = $("searchResults2");
+  if (!box) return;
+  const render = (q) => {
+    q = q.trim().toLowerCase();
+    if (!q) { list.style.display = "none"; return; }
+    const hits = [];
+    for (const c of CITIES) {
+      if (c.name.toLowerCase().startsWith(q) || `${c.name}, ${c.cc}`.toLowerCase().includes(q)) { hits.push(c); if (hits.length >= 10) break; }
+    }
+    list.innerHTML = hits.map((c) => `<div class="sres" data-id="${c.id}">${c.name} <span class="cc">${c.cc}</span></div>`).join("");
+    list.style.display = hits.length ? "block" : "none";
+    list.querySelectorAll(".sres").forEach((el) => el.addEventListener("click", () => {
+      selectCityOption(CITY_BY_ID.get(Number(el.dataset.id)));
+      box.value = ""; list.style.display = "none";
+    }));
+  };
+  box.addEventListener("input", () => render(box.value));
+  box.addEventListener("blur", () => setTimeout(() => (list.style.display = "none"), 200));
+}
+
 function main() {
-  $("regionSel").innerHTML = REGIONS.map((r) => `<option value="${r.code}">${r.name}</option>`).join("");
+  $("regionSel").innerHTML = FEATURED.map((c) => `<option value="${c.id}">${c.name}, ${c.cc}</option>`).join("");
+  wireDappSearch();
   if (!CFG) { notDeployed(); return; }
   $("netBadge").textContent = `${CFG.chainName} · 실제 온체인`;
   $("walletHint").textContent = `${CFG.chainName} 지갑(MetaMask 등)을 연결하세요. 가스비는 테스트넷 ${CFG.currency || "ETH"}입니다.`;
