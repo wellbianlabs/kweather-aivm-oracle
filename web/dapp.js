@@ -5,11 +5,14 @@ const CFG = window.DAPP_CONFIG;
 const CITIES = (window.CITIES || []).map(([id, name, cc, lat, lon]) => ({ id, name, cc, lat, lon }));
 const CITY_BY_ID = new Map(CITIES.map((c) => [c.id, c]));
 const FEATURED = (window.FEATURED || []).map((f) => ({ id: f.id, name: f.name, cc: f.country, lat: f.lat, lon: f.lon }));
-const LEGACY = { 1168000000: "서울 강남구", 2611000000: "부산 중구", 4617000000: "전남 나주시", 4380000000: "충북 영동군", 5011000000: "제주 제주시" };
+// Korea is not part of this marketplace — hide any Korea-related on-chain regions from the UI.
+// (They remain on-chain since the oracle has no delete; we just don't display them.)
+const KOREA_REGIONS = new Set([1835848]); // GeoNames Seoul (delisted from the catalog)
+const isKoreaRegion = (code) => KOREA_REGIONS.has(Number(code)) || String(code).length === 10; // 10-digit = Korean 법정동 code
 function cityName(code) {
   const c = CITY_BY_ID.get(Number(code));
   if (c) return `${c.name}, ${c.cc}`;
-  return LEGACY[code] || `region #${code}`;
+  return `region #${code}`;
 }
 
 let provider, signer, account;
@@ -53,7 +56,7 @@ function initReadOnly() {
 
 async function refreshStatus() {
   try {
-    const regions = await roOracle.getRegions();
+    const regions = (await roOracle.getRegions()).filter((code) => !isKoreaRegion(code));
     const rows = await Promise.all(
       regions.map(async (code) => {
         const cnt = await roOracle.observationCount(code);
