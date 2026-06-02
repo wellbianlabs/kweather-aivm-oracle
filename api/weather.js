@@ -46,6 +46,28 @@ module.exports = async (req, res) => {
       }
     }
 
+    // K-Weather WORLD weather overlay (kw-world-rt1) for global cities — activates when the
+    // configured key has 세계날씨 entitlement and a K-Weather world city code is provided.
+    // Falls back silently to Open-Meteo otherwise (e.g. demo keys return error 002).
+    if (process.env.KWEATHER_API_KEY && req.query.worldcode) {
+      try {
+        const w = await fetchKWeatherWorld(String(req.query.worldcode));
+        if (w) {
+          const last = series[series.length - 1];
+          last.temperature = r1(w.temperature);
+          if (w.humidity != null) last.humidity = w.humidity;
+          last.precipitation = r1(w.precipitation);
+          last.windSpeed = r1(w.windSpeed);
+          if (w.windDirection != null) last.windDirection = w.windDirection;
+          last.discomfortIndex = r1(discomfort(w.temperature, w.humidity != null ? w.humidity : last.humidity));
+          if (w.condition) last.condition = w.condition;
+          source = "kweather-world+open-meteo";
+        }
+      } catch {
+        /* world overlay is best-effort */
+      }
+    }
+
     return res.status(200).json({ source, series });
   } catch (e) {
     return res.status(502).json({ error: String((e && e.message) || e) });
@@ -147,6 +169,33 @@ async function kweatherSnapshot() {
 async function kweatherFor(code) {
   const snap = await kweatherSnapshot();
   return snap[String(code).substring(0, 2)] || null;
+}
+
+// K-Weather WORLD realtime (kw-world-rt1) for a given K-Weather world city code (15000+).
+// Requires a key with 세계날씨 entitlement; returns null otherwise (gateway error 002).
+// Field names mirror the domestic schema with defensive fallbacks.
+async function fetchKWeatherWorld(worldCode) {
+  const base = process.env.KWEATHER_API_URL || "https://gateway.kweather.co.kr/weather/w3/v2/kw-sensors";
+  const key = process.env.KWEATHER_API_KEY;
+  const r = await fetch(`${base}/kw-world-rt1/${encodeURIComponent(worldCode)}?api_key=${encodeURIComponent(key)}`, {
+    signal: AbortSignal.timeout(6000),
+  });
+  if (!r.ok) return null;
+  const j = await r.json();
+  if (String(j.error) !== "0" || !j.data) return null;
+  const first = typeof j.data === "object" ? Object.values(j.data)[0] : null;
+  const d = (first && first.data) || first;
+  if (!d) return null;
+  const present = (...xs) => xs.some((v) => v !== undefined && v !== null && v !== "");
+  if (!present(d.t1h, d.ta, d.temp, d.temperature)) return null;
+  return {
+    temperature: num(d.t1h, d.ta, d.temp, d.temperature),
+    humidity: present(d.reh, d.humidity, d.rh) ? Math.round(num(d.reh, d.humidity, d.rh)) : null,
+    precipitation: num(d.rn1, d.rain, d.precipitation, d.pcp),
+    windSpeed: num(d.wsd, d.ws, d.windSpeed),
+    windDirection: present(d.vec, d.wd, d.windDirection) ? Math.round(num(d.vec, d.wd, d.windDirection)) : null,
+    condition: d.wText || d.weather || d.sky || undefined,
+  };
 }
 
 const num = (v) => (v === null || v === undefined || Number.isNaN(Number(v)) ? 0 : Number(v));

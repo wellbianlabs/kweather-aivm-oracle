@@ -7,18 +7,19 @@
 
 const { ethers } = require("ethers");
 
-// Featured global cities (GeoNames id = on-chain code) published by the hourly cron.
+// Featured global cities (GeoNames id = on-chain code). `wc` = K-Weather world city code
+// (kw-world-rt1) used when the key has 세계날씨 entitlement; otherwise Open-Meteo.
 const FEATURED = [
-  { code: 1796236, lat: 31.2222, lon: 121.4581 }, // Shanghai
-  { code: 745044, lat: 41.0138, lon: 28.9497 }, // Istanbul
-  { code: 2332459, lat: 6.4541, lon: 3.3947 }, // Lagos
-  { code: 1566083, lat: 10.823, lon: 106.6297 }, // Ho Chi Minh City
-  { code: 1275339, lat: 19.0728, lon: 72.8826 }, // Mumbai
-  { code: 3448439, lat: -23.5475, lon: -46.6361 }, // São Paulo
-  { code: 3530597, lat: 19.4285, lon: -99.1277 }, // Mexico City
-  { code: 524901, lat: 55.752, lon: 37.6178 }, // Moscow
-  { code: 1185241, lat: 23.7104, lon: 90.4074 }, // Dhaka
-  { code: 1835848, lat: 37.566, lon: 126.9784 }, // Seoul
+  { code: 1796236, lat: 31.2222, lon: 121.4581, wc: 15107 }, // Shanghai
+  { code: 745044, lat: 41.0138, lon: 28.9497, wc: 15127 }, // Istanbul
+  { code: 2332459, lat: 6.4541, lon: 3.3947, wc: 16089 }, // Lagos
+  { code: 1566083, lat: 10.823, lon: 106.6297, wc: 17963 }, // Ho Chi Minh City
+  { code: 1275339, lat: 19.0728, lon: 72.8826, wc: 15098 }, // Mumbai
+  { code: 3448439, lat: -23.5475, lon: -46.6361, wc: 15063 }, // São Paulo
+  { code: 3530597, lat: 19.4285, lon: -99.1277, wc: 15033 }, // Mexico City
+  { code: 524901, lat: 55.752, lon: 37.6178, wc: 15010 }, // Moscow
+  { code: 1185241, lat: 23.7104, lon: 90.4074, wc: 15055 }, // Dhaka
+  { code: 1835848, lat: 37.566, lon: 126.9784 }, // Seoul (domestic)
 ];
 
 const ORACLE_ABI = [
@@ -48,7 +49,8 @@ module.exports = async (req, res) => {
     const codes = [];
     const tuples = [];
     for (const rg of targets) {
-      const r = await fetch(`${base}/api/weather?lat=${rg.lat}&lon=${rg.lon}&code=${rg.code}`);
+      const wc = rg.wc ? `&worldcode=${rg.wc}` : "";
+      const r = await fetch(`${base}/api/weather?lat=${rg.lat}&lon=${rg.lon}&code=${rg.code}${wc}`);
       if (!r.ok) continue;
       const j = await r.json();
       const o = j.series && j.series[j.series.length - 1];

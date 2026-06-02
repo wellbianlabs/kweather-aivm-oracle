@@ -9,6 +9,14 @@ const CITIES = (window.CITIES || []).map(([id, name, cc, lat, lon]) => ({ id, na
 const CITY_BY_ID = new Map(CITIES.map((c) => [c.id, c]));
 const FEATURED = (window.FEATURED || []).map((f) => ({ id: f.id, name: f.name, cc: f.country, lat: f.lat, lon: f.lon }));
 
+// GeoNames id -> K-Weather world city code (kw-world-rt1). Activates K-Weather 세계날씨
+// when the configured key has the entitlement; otherwise the API falls back to Open-Meteo.
+const WORLDCODE = {
+  1796236: 15107, 745044: 15127, 2332459: 16089, 1566083: 17963, 1275339: 15098,
+  3448439: 15063, 3530597: 15033, 524901: 15010, 1185241: 15055, 1850147: 15104,
+  2643743: 15082, 2988507: 15134, 5128581: 15039, 1816670: 15106, 292223: 15071,
+};
+
 const SCALE = { temperature: 100, humidity: 1, precipitation: 100, windSpeed: 100, windDirection: 1, pm10: 1, pm25: 1, solarRadiation: 100, uvIndex: 10, discomfortIndex: 10 };
 const VEC_DIRS = ["북", "북동", "동", "남동", "남", "남서", "서", "북서"];
 const dirOf = (deg) => VEC_DIRS[Math.round((deg % 360) / 45) % 8];
@@ -53,7 +61,8 @@ let IDX = 12;
 let playTimer = null;
 
 async function loadCity(city) {
-  const r = await fetch(`/api/weather?lat=${city.lat}&lon=${city.lon}&code=${city.id}`);
+  const wc = WORLDCODE[city.id] ? `&worldcode=${WORLDCODE[city.id]}` : "";
+  const r = await fetch(`/api/weather?lat=${city.lat}&lon=${city.lon}&code=${city.id}${wc}`);
   if (!r.ok) throw new Error("api " + r.status);
   const j = await r.json();
   if (!j.series || !j.series.length) throw new Error("empty");
@@ -65,7 +74,11 @@ async function loadReal() {
   const got = sources.filter(Boolean);
   if (!got.length) throw new Error("no data");
   DATA.real = true;
-  DATA.source = got.some((s) => s.includes("kweather")) ? "KWEATHER+OPEN-METEO" : "OPEN-METEO 실시간";
+  DATA.source = got.some((s) => s.includes("kweather-world"))
+    ? "케이웨더 세계날씨"
+    : got.some((s) => s.includes("kweather"))
+    ? "KWEATHER+OPEN-METEO"
+    : "OPEN-METEO 실시간";
 }
 
 const seriesOf = (city) => (DATA.real && DATA.byId[city.id] ? DATA.byId[city.id] : mockSeries(city));
