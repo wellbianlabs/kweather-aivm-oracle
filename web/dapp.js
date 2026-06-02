@@ -272,7 +272,9 @@ function main() {
   wireDappSearch();
   if (!CFG) { notDeployed(); return; }
   $("netBadge").textContent = `${CFG.chainName} · 실제 온체인`;
-  $("walletHint").textContent = `${CFG.chainName} 지갑(MetaMask 등)을 연결하세요. 가스비는 테스트넷 ${CFG.currency || "ETH"}입니다.`;
+  $("walletHint").textContent = `${CFG.chainName} 지갑(MetaMask 등)을 연결하세요. 가스비는 테스트넷 ${CFG.currency || "tBNB"}입니다.`;
+  if ($("footChain")) $("footChain").textContent = CFG.chainName;
+  if ($("footCurrency")) $("footCurrency").textContent = CFG.currency || "tBNB";
   initReadOnly();
   $("connectBtn").addEventListener("click", connect);
   $("faucetBtn").addEventListener("click", faucet);
