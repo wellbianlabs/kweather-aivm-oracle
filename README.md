@@ -150,7 +150,12 @@ API 키도 계정도 없이 **요청마다 서명 한 번**으로 결제합니�
 | `x402usd` | x402USD | EIP-3009 | BSC testnet | 없음 (서명만) |
 | `usdt-testnet` | USDT | EIP-3009 | BSC testnet | 없음 (서명만) |
 | `usdt-testnet-permit2` | USDT | Permit2 | BSC testnet | 최초 1회 `approve(Permit2)` |
-| `usdt-mainnet` | USDT | Permit2 | BSC mainnet | 최초 1회 `approve(Permit2)` (`X402_ENABLE_MAINNET=true` 시 노출) |
+| `usdt-mainnet` | USDT | Permit2 | BSC mainnet | 최초 1회 `approve(Permit2)` |
+
+> **메인넷 실 USDT 활성화:** `X402_ENABLE_MAINNET=true` + `RPC_URL_MAINNET` 설정(완료) 후, **릴레이어
+> 지갑에 메인넷 BNB(≥0.002) 펀딩**이 필요합니다. 402는 릴레이어가 정산 가스를 가질 때만 `usdt-mainnet`을
+> 노출합니다(라이브니스 게이트) — 미펀딩 상태에서는 소비자가 헛되이 가스를 쓰지 않도록 자동 숨김. 펀딩 즉시 자동 노출.
+> 소비자 측은 실 USDT 보유 + 최초 1회 `approve(Permit2)`(실 BNB 가스 1회)가 필요합니다.
 
 **왜 USDT는 Permit2인가?** 실제 BSC USDT(`0x55d398…`)는 EIP-3009도 EIP-2612 permit도 지원하지 않아
 가스리스 서명 전송이 불가능합니다. 그래서 Uniswap **Permit2**(`SignatureTransfer`)를 씁니다 — 소비자는
