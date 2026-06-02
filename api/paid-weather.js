@@ -39,7 +39,8 @@ module.exports = async (req, res) => {
 
   const resource = `https://${req.headers.host}${req.url}`;
   const description = `Real-time weather${city.label ? " for " + city.label : ""}`;
-  const accepts = x402.buildAccepts({ env: process.env, payTo, resource, description });
+  let accepts = x402.buildAccepts({ env: process.env, payTo, resource, description });
+  accepts = await x402.gateLive(accepts, process.env); // hide mainnet assets the relayer can't settle
 
   const header = req.headers["x-payment"];
   if (!header) {
@@ -52,6 +53,7 @@ module.exports = async (req, res) => {
   catch { return res.status(400).json({ error: "invalid X-PAYMENT base64/JSON" }); }
 
   const requirement = x402.matchRequirement(accepts, payment);
+  if (!requirement) return res.status(402).json({ error: "selected settlement asset is not available", accepts });
   const auth = payment && payment.payload && payment.payload.authorization;
   if (!auth || !(payment.payload && payment.payload.signature)) return res.status(400).json({ error: "missing payload.authorization/signature" });
   if (String(auth.to).toLowerCase() !== payTo.toLowerCase()) return res.status(402).json({ error: "wrong payTo", accepts });

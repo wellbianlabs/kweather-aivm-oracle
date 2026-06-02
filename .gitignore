@@ -12,3 +12,5 @@ deployments.*.json
 !deployments.example.json
 npm-debug.log*
 .secrets/
+
+.vercel
