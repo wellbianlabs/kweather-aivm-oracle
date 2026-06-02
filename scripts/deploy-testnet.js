@@ -15,6 +15,11 @@ const ethers = hre.ethers;
 
 const ONE = 10n ** 18n;
 
+const CHAINS = {
+  baseSepolia: { chainId: 84532, name: "Base Sepolia", rpc: "https://sepolia.base.org", explorer: "https://sepolia.basescan.org", currency: "ETH" },
+  bscTestnet: { chainId: 97, name: "BNB Smart Chain Testnet", rpc: "https://bsc-testnet-rpc.publicnode.com", explorer: "https://testnet.bscscan.com", currency: "tBNB" },
+};
+
 function loadWallets() {
   const f = path.join(__dirname, "..", ".secrets", "wallets.json");
   return JSON.parse(fs.readFileSync(f, "utf8"));
@@ -72,12 +77,13 @@ async function main() {
     subscriptionManager: await sm.getAddress(),
     oracle: await oracle.getAddress(),
   };
-  const explorer = net === "baseSepolia" ? "https://sepolia.basescan.org" : "";
+  const chain = CHAINS[net] || { chainId: wallets.chainId, name: net, rpc: process.env.RPC_URL || "", explorer: "", currency: "ETH" };
+  const explorer = chain.explorer;
   const out = {
     network: net,
-    chainId: wallets.chainId,
+    chainId: chain.chainId,
     explorer,
-    rpc: process.env.RPC_URL || "https://sepolia.base.org",
+    rpc: process.env.RPC_URL || chain.rpc,
     deployer: deployer.address,
     relayer: relayerAddr,
     agent: agentAddr,
@@ -93,7 +99,8 @@ window.DAPP_CONFIG = ${JSON.stringify(
     {
       chainId: out.chainId,
       chainHex: "0x" + out.chainId.toString(16),
-      chainName: "Base Sepolia",
+      chainName: chain.name,
+      currency: chain.currency,
       rpc: out.rpc,
       explorer: out.explorer,
       token: out.token,

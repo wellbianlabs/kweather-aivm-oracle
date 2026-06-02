@@ -59,7 +59,7 @@ module.exports = async (req, res) => {
     }
     if (!codes.length) return res.status(502).json({ error: "no weather data to relay" });
 
-    const provider = new ethers.JsonRpcProvider(RPC_URL || "https://sepolia.base.org");
+    const provider = new ethers.JsonRpcProvider(RPC_URL || "https://bsc-testnet-rpc.publicnode.com");
     const wallet = new ethers.Wallet(RELAYER_PRIVATE_KEY, provider);
     const oracle = new ethers.Contract(ORACLE_ADDRESS, ORACLE_ABI, wallet);
 

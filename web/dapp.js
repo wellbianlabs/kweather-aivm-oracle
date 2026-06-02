@@ -86,9 +86,10 @@ async function connect() {
     await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: CFG.chainHex }] });
   } catch (e) {
     if (e.code === 4902) {
+      const sym = CFG.currency || "ETH";
       await window.ethereum.request({
         method: "wallet_addEthereumChain",
-        params: [{ chainId: CFG.chainHex, chainName: CFG.chainName, nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 }, rpcUrls: [CFG.rpc], blockExplorerUrls: [CFG.explorer] }],
+        params: [{ chainId: CFG.chainHex, chainName: CFG.chainName, nativeCurrency: { name: sym, symbol: sym, decimals: 18 }, rpcUrls: [CFG.rpc], blockExplorerUrls: [CFG.explorer] }],
       });
     }
   }
@@ -112,7 +113,7 @@ async function refreshWallet() {
   ]);
   $("walletBody").innerHTML =
     `<div class="kv"><span class="k">주소</span><span class="v"><a class="ext" href="${addrLink(account)}" target="_blank">${short(account)} ↗</a></span></div>` +
-    `<div class="kv"><span class="k">ETH (가스)</span><span class="v">${Number(ethers.formatEther(eth)).toFixed(4)}</span></div>` +
+    `<div class="kv"><span class="k">${CFG.currency || "ETH"} (가스)</span><span class="v">${Number(ethers.formatEther(eth)).toFixed(4)}</span></div>` +
     `<div class="kv"><span class="k">KWT 잔액</span><span class="v">${fmt(kwt)}</span></div>`;
   const active = BigInt(sub[0]) > BigInt(Math.floor(Date.now() / 1000)) && BigInt(sub[1]) > 0n;
   $("accessBody").innerHTML =
@@ -226,6 +227,7 @@ async function relayNow() {
 function main() {
   $("regionSel").innerHTML = REGIONS.map((r) => `<option value="${r.code}">${r.name}</option>`).join("");
   if (!CFG) { notDeployed(); return; }
+  $("netBadge").textContent = `${CFG.chainName} · 실제 온체인`;
   initReadOnly();
   $("connectBtn").addEventListener("click", connect);
   $("faucetBtn").addEventListener("click", faucet);

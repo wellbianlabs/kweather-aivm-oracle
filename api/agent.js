@@ -73,7 +73,7 @@ module.exports = async (req, res) => {
       return res.status(200).json({ ..._cache, cached: true });
     }
 
-    const provider = new ethers.JsonRpcProvider(RPC_URL || "https://sepolia.base.org");
+    const provider = new ethers.JsonRpcProvider(RPC_URL || "https://bsc-testnet-rpc.publicnode.com");
     const wallet = new ethers.Wallet(AGENT_PRIVATE_KEY, provider);
     const oracle = new ethers.Contract(ORACLE_ADDRESS, ORACLE_ABI, wallet);
     const sm = new ethers.Contract(SUBSCRIPTION_ADDRESS, SM_ABI, wallet);

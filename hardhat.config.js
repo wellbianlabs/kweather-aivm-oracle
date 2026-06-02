@@ -36,6 +36,12 @@ module.exports = {
       chainId: 84532,
       accounts,
     },
+    // BNB Smart Chain testnet (chainId 97)
+    bscTestnet: {
+      url: process.env.RPC_URL || "https://bsc-testnet-rpc.publicnode.com",
+      chainId: 97,
+      accounts,
+    },
     // Any EVM/AIVM-compatible network: set RPC_URL + DEPLOYER_PRIVATE_KEY in .env
     custom: {
       url: RPC_URL,
