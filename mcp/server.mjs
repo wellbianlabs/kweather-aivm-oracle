@@ -3,7 +3,7 @@
  * KWeather × AIVM Oracle — MCP server.
  *
  * Lets any MCP-capable AI agent (Claude Desktop, Cursor, Gemini CLI, …) discover,
- * PURCHASE and CONSUME on-chain weather data for 5,400 world cities.
+ * PURCHASE and CONSUME on-chain weather data for 5,345 world cities.
  *
  * Settlement model (BNB Smart Chain testnet):
  *   - KWT (ERC-20) is the settlement token; tBNB pays gas.
@@ -123,7 +123,7 @@ const server = new McpServer({ name: "kweather-aivm-oracle", version: "1.0.0" })
 
 server.tool(
   "search_cities",
-  "Search the catalog of 5,400 purchasable world weather cities by name. Returns id (on-chain code), name, country, coordinates.",
+  "Search the catalog of 5,345 purchasable world weather cities by name. Returns id (on-chain code), name, country, coordinates.",
   { query: z.string().describe("city name fragment, e.g. 'Tokyo'"), limit: z.number().optional() },
   async ({ query, limit }) => {
     const q = String(query).trim().toLowerCase();

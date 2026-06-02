@@ -8,7 +8,7 @@ module.exports = async (req, res) => {
   const q = String(req.query.q || "").trim().toLowerCase();
   const limit = Math.min(Number(req.query.limit) || 20, 100);
   if (!q) {
-    return res.status(200).json({ total: CITIES.length, note: "5,400 purchasable world cities — add ?q= to search; id = on-chain region code", sample: CITIES.slice(0, limit).map(fmt) });
+    return res.status(200).json({ total: CITIES.length, note: `${CITIES.length} purchasable world cities — add ?q= to search; id = on-chain region code`, sample: CITIES.slice(0, limit).map(fmt) });
   }
   const hits = [];
   for (const c of CITIES) {

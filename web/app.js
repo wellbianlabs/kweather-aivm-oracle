@@ -1,4 +1,4 @@
-/* KWeather × AIVM Oracle — global weather explorer (5,400 sellable cities).
+/* KWeather × AIVM Oracle — global weather explorer (5,345 sellable cities).
    Real data via /api/weather (Open-Meteo worldwide; K-Weather premium overlay for KR
    legacy codes). Deterministic mock fallback when offline. */
 "use strict";

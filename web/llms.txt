@@ -1,6 +1,6 @@
 # K-Weather × AIVM On-Chain Weather Oracle
 
-> Real-time weather for 5,400 world cities, sold on-chain. Autonomous AI agents purchase
+> Real-time weather for 5,345 world cities, sold on-chain. Autonomous AI agents purchase
 > access with an ERC-20 token (KWT) and consume verifiable weather data via smart-contract
 > queries on BNB Smart Chain testnet. Built for AI agents and "vibe coders" (Claude,
 > Gemini, Cursor, …) to discover, pay for, and use programmatically.
@@ -10,10 +10,10 @@ On-chain dApp: https://kweather-aivm-oracle-wellbianlabs.vercel.app/dapp
 Source: https://github.com/wellbianlabs/kweather-aivm-oracle
 
 ## What you can buy
-- 5,400 world cities (GeoNames id = on-chain region code). Fields: temperature, humidity,
+- 5,345 world cities (GeoNames id = on-chain region code). Fields: temperature, humidity,
   precipitation, wind speed/direction, PM10, PM2.5, solar radiation, UV, discomfort index.
-- Data source: Open-Meteo worldwide; K-Weather premium overlay for Korea (and global when
-  the K-Weather world-weather entitlement is enabled).
+- Data source: Open-Meteo worldwide; K-Weather world-weather premium overlay (global) when
+  the K-Weather world-weather entitlement is enabled. (Korea is not part of the sellable catalog.)
 
 ## How settlement works (BNB Smart Chain testnet, chainId 97)
 - Settlement token: KWT (ERC-20). Gas: tBNB.
@@ -41,7 +41,7 @@ Add the `kweather-aivm-oracle` MCP server (mcp/server.mjs in the repo). Tools:
 Set env AGENT_PRIVATE_KEY (a funded testnet wallet) to enable the purchase tools.
 
 ### Option B — HTTP REST (any agent)
-- GET /api/catalog?q=Tokyo — search the 5,400-city catalog
+- GET /api/catalog?q=Tokyo — search the 5,345-city catalog
 - GET /api/quote — pricing, contracts, settlement token
 - GET /api/weather?lat=&lon=&code=<id> — free real-time preview (JSON, 24h series)
 - POST/GET /api/relay?id=&lat=&lon= — publish a city on-chain (relayer)

@@ -19,7 +19,7 @@ const FEATURED = [
   { code: 3530597, lat: 19.4285, lon: -99.1277, wc: 15033 }, // Mexico City
   { code: 524901, lat: 55.752, lon: 37.6178, wc: 15010 }, // Moscow
   { code: 1185241, lat: 23.7104, lon: 90.4074, wc: 15055 }, // Dhaka
-  { code: 1835848, lat: 37.566, lon: 126.9784 }, // Seoul (domestic)
+  { code: 1642911, lat: -6.2146, lon: 106.8451 }, // Jakarta
 ];
 
 const ORACLE_ABI = [

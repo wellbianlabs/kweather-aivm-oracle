@@ -10,7 +10,7 @@
 const { ethers } = require("ethers");
 
 // Featured global cities (GeoNames id → label). The agent rotates through these.
-const REGIONS = { 1796236: "Shanghai, CN", 745044: "Istanbul, TR", 2332459: "Lagos, NG", 1566083: "Ho Chi Minh City, VN", 1275339: "Mumbai, IN", 3448439: "São Paulo, BR", 3530597: "Mexico City, MX", 524901: "Moscow, RU", 1185241: "Dhaka, BD", 1835848: "Seoul, KR" };
+const REGIONS = { 1796236: "Shanghai, CN", 745044: "Istanbul, TR", 2332459: "Lagos, NG", 1566083: "Ho Chi Minh City, VN", 1275339: "Mumbai, IN", 3448439: "São Paulo, BR", 3530597: "Mexico City, MX", 524901: "Moscow, RU", 1185241: "Dhaka, BD", 1642911: "Jakarta, ID" };
 
 const ORACLE_ABI = [
   "function queryLatest(uint256) returns (tuple(uint256,int256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256))",

@@ -1,7 +1,7 @@
 # KWeather × AIVM Oracle — MCP Server
 
 Lets any MCP-capable AI agent (**Claude Desktop, Cursor, Gemini CLI, Cline, …**) discover,
-**purchase**, and **consume** on-chain weather data for 5,400 world cities.
+**purchase**, and **consume** on-chain weather data for 5,345 world cities.
 
 ## Tools
 | Tool | Wallet? | What it does |

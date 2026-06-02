@@ -14,6 +14,8 @@ const fs = require("fs");
 const path = require("path");
 
 const LIMIT = 5400;
+// Countries excluded from the sellable catalog (e.g. served via a dedicated channel).
+const EXCLUDE_COUNTRIES = new Set(["KR"]);
 const src = process.argv[2] || path.join(__dirname, "..", ".secrets", "tmp", "cities15000.txt");
 const txt = fs.readFileSync(src, "utf8");
 
@@ -28,6 +30,7 @@ for (const line of txt.split("\n")) {
   const country = c[8];
   const pop = parseInt(c[14], 10) || 0;
   if (!id || Number.isNaN(lat) || Number.isNaN(lon)) continue;
+  if (EXCLUDE_COUNTRIES.has(country)) continue; // Korea excluded from the catalog
   rows.push({ id, name, country, lat, lon, pop });
 }
 

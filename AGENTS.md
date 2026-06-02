@@ -1,7 +1,7 @@
 # AGENTS.md — how AI agents buy & use this weather oracle
 
 This repo is an **on-chain weather data marketplace for autonomous AI agents**. Weather for
-5,400 world cities is published on-chain; agents pay an ERC-20 token (KWT) to query it.
+5,345 world cities is published on-chain; agents pay an ERC-20 token (KWT) to query it.
 
 ## The purchase → settlement → consume flow
 
