@@ -1,0 +1,61 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "K-Weather × AIVM On-Chain Weather Oracle API",
+    "version": "1.0.0",
+    "description": "Real-time weather for 5,400 world cities, purchasable on-chain by AI agents. See /llms.txt for the agent guide and settlement model."
+  },
+  "servers": [{ "url": "https://kweather-aivm-oracle-wellbianlabs.vercel.app" }],
+  "paths": {
+    "/api/catalog": {
+      "get": {
+        "summary": "Search the 5,400-city catalog",
+        "parameters": [
+          { "name": "q", "in": "query", "schema": { "type": "string" }, "description": "city name fragment" },
+          { "name": "limit", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "matching cities with id (on-chain region code), country, lat, lon" } }
+      }
+    },
+    "/api/quote": {
+      "get": {
+        "summary": "Pricing, contracts, settlement token, how-to-consume",
+        "responses": { "200": { "description": "live quote" } }
+      }
+    },
+    "/api/weather": {
+      "get": {
+        "summary": "Free real-time weather preview (24h series)",
+        "parameters": [
+          { "name": "lat", "in": "query", "required": true, "schema": { "type": "number" } },
+          { "name": "lon", "in": "query", "required": true, "schema": { "type": "number" } },
+          { "name": "code", "in": "query", "schema": { "type": "string" }, "description": "city id / region code" },
+          { "name": "worldcode", "in": "query", "schema": { "type": "string" }, "description": "K-Weather world city code (optional)" }
+        ],
+        "responses": { "200": { "description": "{ source, series: [hourly observations] }" } }
+      }
+    },
+    "/api/relay": {
+      "get": {
+        "summary": "Publish a city's current weather on-chain (relayer-signed)",
+        "parameters": [
+          { "name": "id", "in": "query", "schema": { "type": "string" } },
+          { "name": "lat", "in": "query", "schema": { "type": "number" } },
+          { "name": "lon", "in": "query", "schema": { "type": "number" } }
+        ],
+        "responses": { "200": { "description": "{ ok, txHash, block }" } }
+      }
+    },
+    "/api/agent": {
+      "get": {
+        "summary": "Autonomous agent demo: subscribes, pays, queries on-chain, returns a forecast decision",
+        "responses": { "200": { "description": "agent activity + tx hashes" } }
+      }
+    }
+  },
+  "x-mcp": {
+    "server": "kweather-aivm-oracle",
+    "entry": "mcp/server.mjs",
+    "tools": ["search_cities", "get_weather", "get_pricing", "get_account", "get_oracle_status", "faucet_kwt", "subscribe", "deposit_prepaid", "buy_weather"]
+  }
+}
