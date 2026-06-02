@@ -27,9 +27,16 @@ module.exports = async (req, res) => {
     let source = "open-meteo";
     if (process.env.KWEATHER_API_KEY && req.query.code) {
       try {
-        const kw = await fetchKWeatherLatest(String(req.query.code));
+        const kw = await kweatherFor(String(req.query.code));
         if (kw) {
-          Object.assign(series[series.length - 1], kw);
+          const last = series[series.length - 1];
+          last.temperature = r1(kw.temperature);
+          last.humidity = kw.humidity;
+          last.precipitation = r1(kw.precipitation);
+          last.windSpeed = r1(kw.windSpeed);
+          last.windDirection = kw.windDirection;
+          last.discomfortIndex = r1(discomfort(kw.temperature, kw.humidity));
+          if (kw.wText) last.condition = kw.wText;
           source = "kweather+open-meteo";
         }
       } catch {
@@ -102,35 +109,42 @@ async function fetchOpenMeteo(lat, lon) {
   return out;
 }
 
-// K-Weather gateway latest observation (premium overlay). Mirrors oracle-node/kweatherClient.js.
-async function fetchKWeatherLatest(code) {
-  const base = process.env.KWEATHER_API_URL || "https://gateway.kweather.co.kr:8443/weather/w3/v2/kw-sensors";
+// K-Weather gateway snapshot (premium overlay). The `apps-odam` sensor returns the
+// current observation for the major 시/도 regions in one call. We index it by the first
+// two digits of the 법정동코드 (시/도) and overlay the authoritative current values.
+let _kwCache = { t: 0, byProvince: null };
+
+async function kweatherSnapshot() {
+  if (_kwCache.byProvince && Date.now() - _kwCache.t < 5 * 60 * 1000) return _kwCache.byProvince;
+  const base = process.env.KWEATHER_API_URL || "https://gateway.kweather.co.kr/weather/w3/v2/kw-sensors";
   const key = process.env.KWEATHER_API_KEY;
-  const dc = code;
-  const sg = dc.substring(0, 5) + "00000";
-  const kw = async (sensor, c) => {
-    const r = await fetch(`${base}/${sensor}/${encodeURIComponent(c)}?api_key=${encodeURIComponent(key)}`, {
-      signal: AbortSignal.timeout(6000),
-    });
-    if (!r.ok) return null;
-    const j = await r.json();
-    if (j.error !== undefined && String(j.error) !== "0") return null;
-    const payload = j.data ?? j;
-    const first = payload && typeof payload === "object" ? Object.values(payload)[0] : null;
-    return (first && first.data) || first || null;
-  };
-  const wx = (await kw("kw-odam1", dc).catch(() => null)) || (await kw("kw-odam2", sg).catch(() => null));
-  if (!wx || wx.t1h == null) return null;
-  const dust = (await kw("kw-dust-r1", dc).catch(() => null)) || (await kw("kw-dust-r2", sg).catch(() => null)) || {};
-  return {
-    temperature: r1(num(wx.t1h)),
-    humidity: Math.round(num(wx.reh)),
-    precipitation: r1(num(wx.rn1)),
-    windSpeed: r1(num(wx.wsd)),
-    windDirection: Math.round(num(wx.vec)),
-    pm10: Math.round(num(dust.pm10)) || undefined,
-    pm25: Math.round(num(dust.pm25)) || undefined,
-  };
+  const r = await fetch(`${base}/apps-odam?api_key=${encodeURIComponent(key)}`, { signal: AbortSignal.timeout(6000) });
+  if (!r.ok) throw new Error(`kweather ${r.status}`);
+  const j = await r.json();
+  if (String(j.error) !== "0" || !j.data) throw new Error(`kweather ${j.message || j.error}`);
+  const byProvince = {};
+  for (const [code, v] of Object.entries(j.data)) {
+    const d = v && v.data;
+    if (!d || d.t1h == null) continue;
+    byProvince[code.substring(0, 2)] = {
+      code,
+      state: d.state,
+      temperature: num(d.t1h),
+      humidity: Math.round(num(d.reh)),
+      precipitation: num(d.rn1),
+      windSpeed: num(d.wsd),
+      windDirection: Math.round(num(d.vec)),
+      wText: d.wText,
+      ts: v.service && v.service.timestamp,
+    };
+  }
+  _kwCache = { t: Date.now(), byProvince };
+  return byProvince;
+}
+
+async function kweatherFor(code) {
+  const snap = await kweatherSnapshot();
+  return snap[String(code).substring(0, 2)] || null;
 }
 
 const num = (v) => (v === null || v === undefined || Number.isNaN(Number(v)) ? 0 : Number(v));

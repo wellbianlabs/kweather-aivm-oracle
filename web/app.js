@@ -148,6 +148,7 @@ function labelAt(region, idx) {
   return DATA.real ? hhmm(obsAt(region, idx).time) : String(idx).padStart(2, "0") + ":00";
 }
 function condOf(o) {
+  if (o.condition) return o.condition; // K-Weather wText when available
   if (o.precipitation > 0 && o.temperature <= 2) return "눈";
   if (o.precipitation >= 3) return "비";
   if (o.precipitation > 0) return "약한 비";
