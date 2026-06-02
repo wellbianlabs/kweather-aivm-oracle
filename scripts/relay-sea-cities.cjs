@@ -1,11 +1,12 @@
 "use strict";
-// Publish REAL weather for the major Southeast-Asian cities to the on-chain oracle.
+// Publish REAL weather for Southeast-Asian cities to the on-chain oracle.
 // Pulls each city's latest observation from the live /api/weather (Open-Meteo real data),
 // scales floats -> fixed-point ints (same convention as api/relay.js), and pushBatch()es
 // them to KWeatherOracle in chunks. Signed by the deployer key (an authorized relayer).
 //
-//   node scripts/relay-sea-cities.cjs [count] [chunk]
-//   count = how many top SE-Asia cities (default 50), chunk = regions per tx (default 10)
+//   node scripts/relay-sea-cities.cjs [count|all] [chunk] [fetchConcurrency]
+//   count = how many top SE-Asia cities (default 50; "all" = every SE-Asia city)
+//   chunk = regions per pushBatch tx (default 15), fetchConcurrency = parallel fetches (default 8)
 const { ethers } = require("ethers");
 const CITIES = require("../lib/cities.json");
 const w = require("../.secrets/wallets.json");
@@ -13,8 +14,10 @@ const dep = require("../deployments.bscTestnet.json");
 
 const SITE = process.env.SITE_URL || "https://kweather-aivm-oracle-wellbianlabs.vercel.app";
 const RPC = process.env.RPC_URL || "https://bsc-testnet-rpc.publicnode.com";
-const COUNT = Number(process.argv[2] || 50);
-const CHUNK = Number(process.argv[3] || 10);
+const ARG = process.argv[2] || "50";
+const COUNT = ARG === "all" ? Infinity : Number(ARG);
+const CHUNK = Number(process.argv[3] || 15);
+const POOL = Number(process.argv[4] || 8);
 const SEA = ["ID", "TH", "VN", "PH", "MY", "SG", "KH", "LA", "MM", "BN", "TL"];
 
 const ORACLE_ABI = [
@@ -47,18 +50,29 @@ async function fetchObs(city) {
   return o ? { code, name, cc, tuple: scale(o), temp: o.temperature } : null;
 }
 
-(async () => {
-  const cities = CITIES.filter((x) => SEA.includes(x[2])).slice(0, COUNT);
-  console.log(`Selected ${cities.length} SE-Asia cities; fetching real weather from ${SITE} …`);
-
-  const rows = [];
-  for (const c of cities) {
-    try {
-      const o = await fetchObs(c);
-      if (o) { rows.push(o); process.stdout.write("."); }
-      else process.stdout.write("x");
-    } catch { process.stdout.write("x"); }
+// bounded-concurrency map that preserves input order
+async function mapPool(items, size, fn, onTick) {
+  const out = new Array(items.length);
+  let next = 0, done = 0;
+  async function worker() {
+    while (next < items.length) {
+      const i = next++;
+      try { out[i] = await fn(items[i], i); } catch { out[i] = null; }
+      if (onTick) onTick(++done, items.length, out[i]);
+    }
   }
+  await Promise.all(Array.from({ length: Math.min(size, items.length) }, worker));
+  return out;
+}
+
+(async () => {
+  const cities = CITIES.filter((x) => SEA.includes(x[2])).slice(0, COUNT === Infinity ? undefined : COUNT);
+  console.log(`Selected ${cities.length} SE-Asia cities; fetching real weather (pool ${POOL}) from ${SITE} …`);
+
+  const fetched = await mapPool(cities, POOL, fetchObs, (d, t) => {
+    if (d % 25 === 0 || d === t) process.stdout.write(`\r  fetched ${d}/${t}`);
+  });
+  const rows = fetched.filter(Boolean);
   console.log(`\nfetched ${rows.length}/${cities.length} observations`);
   if (!rows.length) { console.error("no data"); process.exit(1); }
 
@@ -70,24 +84,29 @@ async function fetchObs(city) {
   const before = Number(await oracle.regionCount());
   console.log(`oracle ${dep.oracle} | regionCount before: ${before} | signer ${signer.address}`);
 
-  let pushed = 0;
+  let pushed = 0, failed = [];
+  const nChunks = Math.ceil(rows.length / CHUNK);
   for (let i = 0; i < rows.length; i += CHUNK) {
     const part = rows.slice(i, i + CHUNK);
     const codes = part.map((p) => BigInt(p.code));
     const data = part.map((p) => p.tuple);
-    const tx = await oracle.pushBatch(codes, data);
-    const rc = await tx.wait();
-    pushed += part.length;
-    console.log(`  chunk ${i / CHUNK + 1}: ${part.length} regions -> ${tx.hash} (gas ${rc.gasUsed}) [${part.map((p) => p.name).join(", ")}]`);
+    const n = i / CHUNK + 1;
+    try {
+      const tx = await oracle.pushBatch(codes, data);
+      const rc = await tx.wait();
+      pushed += part.length;
+      console.log(`  chunk ${n}/${nChunks}: ${part.length} regions -> ${tx.hash} (gas ${rc.gasUsed})`);
+    } catch (e) {
+      failed.push(...part.map((p) => p.code));
+      console.log(`  chunk ${n}/${nChunks}: FAILED (${(e && e.shortMessage) || (e && e.message) || e})`);
+    }
   }
 
   const after = Number(await oracle.regionCount());
-  console.log(`\nregionCount after: ${after} (was ${before}); pushed ${pushed} observations`);
-
-  // spot-check a few on-chain
+  console.log(`\nregionCount after: ${after} (was ${before}); pushed ${pushed} observations` + (failed.length ? `; ${failed.length} failed` : ""));
   for (const p of rows.slice(0, 3)) {
     const d = await oracle.peekLatest(BigInt(p.code));
-    console.log(`  on-chain ${p.name}: temp ${Number(d[1]) / 100}°C (sent ${p.temp}°C), ts ${Number(d[0])}`);
+    console.log(`  on-chain ${p.name}: temp ${Number(d[1]) / 100}°C (sent ${p.temp}°C)`);
   }
   console.log("DONE");
 })().catch((e) => { console.error("FAIL:", (e && e.shortMessage) || (e && e.message) || e); process.exit(1); });
