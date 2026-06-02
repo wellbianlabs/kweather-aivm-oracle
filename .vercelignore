@@ -6,4 +6,7 @@ coverage.json
 typechain-types
 reference
 .env
+.secrets
+.secrets/
+.git
 deployments.*.json
