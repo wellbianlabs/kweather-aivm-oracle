@@ -139,6 +139,34 @@ function subscribe(uint256 months) external;
 function depositPrepaid(uint256 amount) external;
 ```
 
+## x402 키리스 결제 — 멀티에셋 (USDT 지원)
+
+API 키도 계정도 없이 **요청마다 서명 한 번**으로 결제합니다. `GET /api/paid-weather?city=` 의 첫 호출은
+**HTTP 402** + 결제 가능한 자산 메뉴(`accepts[]`)를 반환하고, 소비자는 자산을 골라 서명한 뒤
+`X-PAYMENT` 헤더로 재요청하면 서버가 온체인 정산 후 날씨를 돌려줍니다.
+
+| 자산(id) | 심볼 | 정산 레일 | 네트워크 | 소비자 가스 |
+|---|---|---|---|---|
+| `x402usd` | x402USD | EIP-3009 | BSC testnet | 없음 (서명만) |
+| `usdt-testnet` | USDT | EIP-3009 | BSC testnet | 없음 (서명만) |
+| `usdt-testnet-permit2` | USDT | Permit2 | BSC testnet | 최초 1회 `approve(Permit2)` |
+| `usdt-mainnet` | USDT | Permit2 | BSC mainnet | 최초 1회 `approve(Permit2)` (`X402_ENABLE_MAINNET=true` 시 노출) |
+
+**왜 USDT는 Permit2인가?** 실제 BSC USDT(`0x55d398…`)는 EIP-3009도 EIP-2612 permit도 지원하지 않아
+가스리스 서명 전송이 불가능합니다. 그래서 Uniswap **Permit2**(`SignatureTransfer`)를 씁니다 — 소비자는
+토큰에 **최초 1회 `approve(Permit2)`** 만 하면(가스 1번), 이후 요청은 **서명만** 으로 릴레이어가
+`permitTransferFrom` 을 대납 제출해 정산합니다.
+
+```bash
+node scripts/x402-client.mjs "Tokyo"                       # x402USD (가스리스)
+node scripts/x402-client.mjs "Tokyo" USDT                  # USDT EIP-3009 (가스리스)
+node scripts/x402-client.mjs "London" usdt-testnet-permit2 # USDT via Permit2 (실 USDT 레일)
+```
+
+검증(테스트넷 실거래): USDT EIP-3009 [tx](https://testnet.bscscan.com/tx/0xeca64ddfbe1d7a3fe5a2b9ac82c1a43bce2168c9e2bf21e7e73724a7670a52f4) ·
+USDT Permit2 [tx](https://testnet.bscscan.com/tx/0x545b26f1894f0506cb9fbb5409eb1e58ea2fd34efba1eff7cd0985e931a85a0d).
+MCP 도구: `pay_x402(city, asset?)`.
+
 ## 보안 노트
 
 - **API Key 신뢰경계:** 키는 오라클 노드(프로덕션은 TEE/엔클레이브) 내부에만 존재하며 온체인에 노출되지 않습니다. (PRD §5.1)

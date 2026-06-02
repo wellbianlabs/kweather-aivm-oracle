@@ -54,8 +54,8 @@
     },
     "/api/paid-weather": {
       "get": {
-        "summary": "x402 keyless pay-per-call weather (HTTP 402)",
-        "description": "No API key. First call -> 402 with payment requirements. Sign an EIP-3009 authorization and retry with the X-PAYMENT header; the server settles on-chain and returns the data.",
+        "summary": "x402 keyless pay-per-call weather (HTTP 402) — multi-asset",
+        "description": "No API key. First call -> 402 with an accepts[] menu of settlement assets (x402USD / USDT via EIP-3009 gasless, or USDT via Uniswap Permit2 for the real-USDT rail; each accepts entry has extra.id/symbol/settlement). Pick one, sign it (EIP-3009 TransferWithAuthorization or Permit2 SignatureTransfer), and retry with the X-PAYMENT header; the server settles on-chain and returns the data.",
         "parameters": [
           { "name": "city", "in": "query", "schema": { "type": "string" } },
           { "name": "lat", "in": "query", "schema": { "type": "number" } },

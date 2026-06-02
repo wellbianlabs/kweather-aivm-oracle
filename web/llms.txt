@@ -47,16 +47,25 @@ Set env AGENT_PRIVATE_KEY (a funded testnet wallet) to enable the purchase tools
 - POST/GET /api/relay?id=&lat=&lon= — publish a city on-chain (relayer)
 - Metered purchase + query happens via the smart contracts (see /openapi.json and /api/quote).
 
-### Option C — x402 (HTTP 402, KEYLESS pay-per-call)
+### Option C — x402 (HTTP 402, KEYLESS pay-per-call) — MULTI-ASSET
 GET /api/paid-weather?city=Tokyo with NO API key:
-1. First call returns HTTP 402 + { x402Version:1, accepts:[ {scheme:"exact", network:"eip155:97",
-   maxAmountRequired:"10000", asset:<x402USD>, payTo, extra:{name:"x402 USD",version:"1"}} ] }.
-2. The caller signs an EIP-3009 TransferWithAuthorization (gasless — payer spends no gas, holds
-   no API key), base64-encodes { x402Version, scheme, network, payload:{ signature, authorization } }.
-3. Retry with header `X-PAYMENT: <base64>` -> the server settles the payment on-chain and returns
-   200 + weather, with an `X-PAYMENT-RESPONSE` header containing the settlement tx.
-Settlement asset: x402USD (EIP-3009, 6 decimals) on BNB Smart Chain testnet. Price: 0.01 / call.
-Reference client: scripts/x402-client.mjs. MCP tool: pay_x402(city).
+1. First call returns HTTP 402 + { x402Version:1, accepts:[ paymentRequirements... ] }. Each entry
+   carries extra:{ id, symbol, settlement, decimals, ... } so a caller can pick its asset. Offered:
+     - id=x402usd              symbol=x402USD settlement=eip3009 (BSC testnet, 6 dec)  — gasless
+     - id=usdt-testnet         symbol=USDT    settlement=eip3009 (BSC testnet, 18 dec) — gasless
+     - id=usdt-testnet-permit2 symbol=USDT    settlement=permit2 (BSC testnet, 18 dec) — real-USDT rail
+     - id=usdt-mainnet         symbol=USDT    settlement=permit2 (BSC mainnet, real Binance-Peg USDT)
+       [advertised only when the server runs with X402_ENABLE_MAINNET=true]
+2. Pick one and sign:
+     - settlement=eip3009: sign EIP-3009 TransferWithAuthorization (gasless — payer spends no gas).
+     - settlement=permit2: real USDT supports no gasless transfer, so sign a Unispaw Permit2
+       Uniswap Permit2 SignatureTransfer over extra.permit2/extra.spender. One-time approve(Permit2) is needed
+       (one gas tx); every call after is signature-only.
+   base64-encode { x402Version, scheme:"exact", network, asset, id, settlement, payload:{ signature, authorization } }.
+3. Retry with header `X-PAYMENT: <base64>` -> the server settles on-chain and returns 200 + weather,
+   with an `X-PAYMENT-RESPONSE` header containing the settlement tx.
+Price: 0.01 / call in the chosen asset. Reference client: scripts/x402-client.mjs ("Tokyo" [asset]).
+MCP tool: pay_x402(city, asset?).
 
 ## Machine-readable
 - /openapi.json — OpenAPI 3 spec of the REST API

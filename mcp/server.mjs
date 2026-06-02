@@ -290,22 +290,56 @@ server.tool(
 
 server.tool(
   "pay_x402",
-  "Keyless HTTP-402 pay-per-call: pay 0.01 x402USD by SIGNING an authorization (no gas, no API key) and receive real-time weather for a city. The server settles on-chain. Needs AGENT_PRIVATE_KEY (holding x402USD).",
-  { city: z.string().describe("city name or id") },
-  async ({ city }) => {
+  "Keyless HTTP-402 pay-per-call: pay 0.01 for real-time weather by SIGNING a payment (no API key). Multi-asset — `asset` selects from the 402 challenge by symbol or id: x402USD or USDT (EIP-3009, gasless), or a Permit2 rail (one-time approve, then signature-only) for real USDT. The server settles on-chain. Needs AGENT_PRIVATE_KEY.",
+  { city: z.string().describe("city name or id"), asset: z.string().optional().describe("settlement asset symbol or id (e.g. USDT, x402USD, usdt-testnet-permit2); default = first offered") },
+  async ({ city, asset }) => {
     if (!signer) return err(need("pay via x402"));
     const url = `${CFG.site}/api/paid-weather?city=${encodeURIComponent(city)}`;
     const r1 = await fetch(url);
     if (r1.status !== 402) return err(`expected 402 challenge, got ${r1.status}`);
-    const acc = (await r1.json()).accepts[0];
+    const accepts = (await r1.json()).accepts;
+    const want = String(asset || "").toLowerCase();
+    const acc = accepts.find((a) => a.extra.id === want || String(a.extra.symbol || "").toLowerCase() === want) || accepts[0];
+    const chainId = Number(String(acc.network).split(":")[1]);
     const now = Math.floor(Date.now() / 1000);
-    const authorization = { from: signer.address, to: acc.payTo, value: acc.maxAmountRequired, validAfter: 0, validBefore: now + 600, nonce: ethers.hexlify(ethers.randomBytes(32)) };
-    const domain = { name: acc.extra.name, version: acc.extra.version, chainId: 97, verifyingContract: acc.asset };
-    const types = { TransferWithAuthorization: [
-      { name: "from", type: "address" }, { name: "to", type: "address" }, { name: "value", type: "uint256" },
-      { name: "validAfter", type: "uint256" }, { name: "validBefore", type: "uint256" }, { name: "nonce", type: "bytes32" } ] };
-    const signature = await signer.signTypedData(domain, types, authorization);
-    const xPayment = Buffer.from(JSON.stringify({ x402Version: 1, scheme: "exact", network: acc.network, payload: { signature, authorization } })).toString("base64");
+    let payload, settlement;
+
+    if (acc.extra.settlement === "permit2") {
+      settlement = "permit2";
+      const erc20 = new ethers.Contract(acc.asset, [
+        "function allowance(address,address) view returns (uint256)",
+        "function approve(address,uint256) returns (bool)",
+      ], signer);
+      const allowed = await erc20.allowance(signer.address, acc.extra.permit2);
+      if (allowed < BigInt(acc.maxAmountRequired)) {
+        const txa = await erc20.approve(acc.extra.permit2, ethers.MaxUint256);
+        await txa.wait(); // one-time approve(Permit2)
+      }
+      const nonce = ethers.toBigInt(ethers.randomBytes(32)).toString();
+      const deadline = now + 600;
+      const authorization = { from: signer.address, to: acc.payTo, value: acc.maxAmountRequired, nonce, deadline, token: acc.asset, spender: acc.extra.spender };
+      const domain = { name: "Permit2", chainId, verifyingContract: acc.extra.permit2 };
+      const types = {
+        PermitTransferFrom: [
+          { name: "permitted", type: "TokenPermissions" }, { name: "spender", type: "address" },
+          { name: "nonce", type: "uint256" }, { name: "deadline", type: "uint256" } ],
+        TokenPermissions: [ { name: "token", type: "address" }, { name: "amount", type: "uint256" } ],
+      };
+      const value = { permitted: { token: acc.asset, amount: acc.maxAmountRequired }, spender: acc.extra.spender, nonce, deadline };
+      const signature = await signer.signTypedData(domain, types, value);
+      payload = { signature, authorization };
+    } else {
+      settlement = "eip3009";
+      const authorization = { from: signer.address, to: acc.payTo, value: acc.maxAmountRequired, validAfter: 0, validBefore: now + 600, nonce: ethers.hexlify(ethers.randomBytes(32)) };
+      const domain = { name: acc.extra.name, version: acc.extra.version, chainId, verifyingContract: acc.asset };
+      const types = { TransferWithAuthorization: [
+        { name: "from", type: "address" }, { name: "to", type: "address" }, { name: "value", type: "uint256" },
+        { name: "validAfter", type: "uint256" }, { name: "validBefore", type: "uint256" }, { name: "nonce", type: "bytes32" } ] };
+      const signature = await signer.signTypedData(domain, types, authorization);
+      payload = { signature, authorization };
+    }
+
+    const xPayment = Buffer.from(JSON.stringify({ x402Version: 1, scheme: "exact", network: acc.network, asset: acc.asset, id: acc.extra.id, settlement, payload })).toString("base64");
     const r2 = await fetch(url, { headers: { "X-PAYMENT": xPayment } });
     return ok(await r2.json());
   }

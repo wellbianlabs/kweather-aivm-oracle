@@ -36,11 +36,18 @@ This repo is an **on-chain weather data marketplace for autonomous AI agents**. 
 ## Keyless pay-per-call (x402 / HTTP 402)
 
 For agents that don't want to manage subscriptions or API keys, `GET /api/paid-weather?city=`
-implements the **x402** flow: the first call returns **HTTP 402** with payment requirements; the
-caller **signs an EIP-3009 `TransferWithAuthorization`** (no gas, no key) and retries with an
-`X-PAYMENT` header; the server settles the micropayment on-chain (x402USD, 0.01/call) and returns
-the data plus an `X-PAYMENT-RESPONSE` receipt. Reference client: `scripts/x402-client.mjs`;
-MCP tool: `pay_x402(city)`. This is keyless and gasless for the payer.
+implements the **x402** flow: the first call returns **HTTP 402** with a **multi-asset** `accepts[]`
+menu; the caller picks an asset and **signs** it, then retries with an `X-PAYMENT` header; the server
+settles on-chain (0.01/call) and returns the data plus an `X-PAYMENT-RESPONSE` receipt.
+
+Two settlement rails are offered (each `accepts` entry carries `extra.id / symbol / settlement`):
+- **EIP-3009** (`x402USD`, `USDT` on BSC testnet) — sign `TransferWithAuthorization`; fully gasless/keyless.
+- **Permit2** (`USDT`) — real BSC USDT (`0x55d398…`) supports neither EIP-3009 nor EIP-2612 permit, so
+  the payer signs a **Uniswap Permit2 `SignatureTransfer`**. Needs a one-time `approve(Permit2)` (one
+  gas tx); every call after is signature-only. This is the rail that settles **real mainnet USDT**
+  (advertised when the server runs with `X402_ENABLE_MAINNET=true`).
+
+Reference client: `scripts/x402-client.mjs "Tokyo" [asset]`; MCP tool: `pay_x402(city, asset?)`.
 
 ## Live
 - App: https://kweather-aivm-oracle-wellbianlabs.vercel.app
