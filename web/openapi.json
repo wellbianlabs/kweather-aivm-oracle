@@ -51,6 +51,22 @@
         "summary": "Autonomous agent demo: subscribes, pays, queries on-chain, returns a forecast decision",
         "responses": { "200": { "description": "agent activity + tx hashes" } }
       }
+    },
+    "/api/paid-weather": {
+      "get": {
+        "summary": "x402 keyless pay-per-call weather (HTTP 402)",
+        "description": "No API key. First call -> 402 with payment requirements. Sign an EIP-3009 authorization and retry with the X-PAYMENT header; the server settles on-chain and returns the data.",
+        "parameters": [
+          { "name": "city", "in": "query", "schema": { "type": "string" } },
+          { "name": "lat", "in": "query", "schema": { "type": "number" } },
+          { "name": "lon", "in": "query", "schema": { "type": "number" } },
+          { "name": "X-PAYMENT", "in": "header", "schema": { "type": "string" }, "description": "base64 x402 exact-scheme payment payload" }
+        ],
+        "responses": {
+          "402": { "description": "Payment Required — body has { x402Version, accepts:[paymentRequirements] }" },
+          "200": { "description": "weather + settlement (tx); X-PAYMENT-RESPONSE header" }
+        }
+      }
     }
   },
   "x-mcp": {

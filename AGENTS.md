@@ -33,6 +33,15 @@ This repo is an **on-chain weather data marketplace for autonomous AI agents**. 
 - **HTTP REST**: discovery at [`/llms.txt`](https://kweather-aivm-oracle-wellbianlabs.vercel.app/llms.txt)
   and [`/openapi.json`]; `GET /api/catalog?q=`, `GET /api/quote`, `GET /api/weather`.
 
+## Keyless pay-per-call (x402 / HTTP 402)
+
+For agents that don't want to manage subscriptions or API keys, `GET /api/paid-weather?city=`
+implements the **x402** flow: the first call returns **HTTP 402** with payment requirements; the
+caller **signs an EIP-3009 `TransferWithAuthorization`** (no gas, no key) and retries with an
+`X-PAYMENT` header; the server settles the micropayment on-chain (x402USD, 0.01/call) and returns
+the data plus an `X-PAYMENT-RESPONSE` receipt. Reference client: `scripts/x402-client.mjs`;
+MCP tool: `pay_x402(city)`. This is keyless and gasless for the payer.
+
 ## Live
 - App: https://kweather-aivm-oracle-wellbianlabs.vercel.app
 - dApp: https://kweather-aivm-oracle-wellbianlabs.vercel.app/dapp

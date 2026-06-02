@@ -288,6 +288,29 @@ server.tool(
   }
 );
 
+server.tool(
+  "pay_x402",
+  "Keyless HTTP-402 pay-per-call: pay 0.01 x402USD by SIGNING an authorization (no gas, no API key) and receive real-time weather for a city. The server settles on-chain. Needs AGENT_PRIVATE_KEY (holding x402USD).",
+  { city: z.string().describe("city name or id") },
+  async ({ city }) => {
+    if (!signer) return err(need("pay via x402"));
+    const url = `${CFG.site}/api/paid-weather?city=${encodeURIComponent(city)}`;
+    const r1 = await fetch(url);
+    if (r1.status !== 402) return err(`expected 402 challenge, got ${r1.status}`);
+    const acc = (await r1.json()).accepts[0];
+    const now = Math.floor(Date.now() / 1000);
+    const authorization = { from: signer.address, to: acc.payTo, value: acc.maxAmountRequired, validAfter: 0, validBefore: now + 600, nonce: ethers.hexlify(ethers.randomBytes(32)) };
+    const domain = { name: acc.extra.name, version: acc.extra.version, chainId: 97, verifyingContract: acc.asset };
+    const types = { TransferWithAuthorization: [
+      { name: "from", type: "address" }, { name: "to", type: "address" }, { name: "value", type: "uint256" },
+      { name: "validAfter", type: "uint256" }, { name: "validBefore", type: "uint256" }, { name: "nonce", type: "bytes32" } ] };
+    const signature = await signer.signTypedData(domain, types, authorization);
+    const xPayment = Buffer.from(JSON.stringify({ x402Version: 1, scheme: "exact", network: acc.network, payload: { signature, authorization } })).toString("base64");
+    const r2 = await fetch(url, { headers: { "X-PAYMENT": xPayment } });
+    return ok(await r2.json());
+  }
+);
+
 const transport = new StdioServerTransport();
 await server.connect(transport);
 console.error("kweather-aivm-oracle MCP server ready (stdio)");

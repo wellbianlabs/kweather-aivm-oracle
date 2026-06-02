@@ -15,6 +15,7 @@ Lets any MCP-capable AI agent (**Claude Desktop, Cursor, Gemini CLI, Cline, …*
 | `subscribe(months)` | yes | **buy** a monthly query allowance (pays KWT) |
 | `deposit_prepaid(amount)` | yes | **buy** pay-per-query credit (pays KWT) |
 | `buy_weather(city)` | yes | **buy + consume** one metered query → weather + settlement (tx, mode, treasury) |
+| `pay_x402(city)` | yes | **keyless HTTP-402 pay-per-call** — sign once (no gas), server settles → weather + receipt |
 
 Read tools need nothing. Purchase tools need `AGENT_PRIVATE_KEY` — a funded **BNB Smart Chain
 testnet** wallet (get tBNB from a faucet; mint KWT with `faucet_kwt`).
