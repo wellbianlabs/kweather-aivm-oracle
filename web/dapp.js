@@ -1,4 +1,4 @@
-/* KWeather × AIVM on-chain dApp (Base Sepolia). Requires ethers UMD + dapp-config.js + abi.js. */
+/* KWeather × AIVM on-chain dApp (BNB Smart Chain Testnet). Requires ethers UMD + dapp-config.js + abi.js. */
 "use strict";
 
 const CFG = window.DAPP_CONFIG;
@@ -86,7 +86,7 @@ async function connect() {
   if (!window.ethereum) { alert("MetaMask 등 EVM 지갑이 필요합니다."); return; }
   const bp = new ethers.BrowserProvider(window.ethereum);
   await bp.send("eth_requestAccounts", []);
-  // ensure Base Sepolia
+  // ensure the configured network (BNB Smart Chain Testnet)
   try {
     await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: CFG.chainHex }] });
   } catch (e) {
