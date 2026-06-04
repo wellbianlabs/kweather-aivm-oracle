@@ -1,15 +1,19 @@
-// TEMP diagnostic: inspect the raw K-Weather world (kw-world-rt1) gateway response
-// with the live server-side key. Does NOT echo the key. Remove after debugging.
-//   GET /api/_kwdiag?worldcode=15107
+// TEMP diagnostic: probe the K-Weather gateway with the live server-side key.
+// Does NOT echo the key. Remove after debugging.
+//   GET /api/kwdiag?sensor=kw-world-rt1&code=15107[&base=...]
+//   GET /api/kwdiag?sensor=apps-odam            (domestic snapshot, no code)
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   const base = req.query.base ? String(req.query.base) : (process.env.KWEATHER_API_URL || "https://gateway.kweather.co.kr/weather/w3/v2/kw-sensors");
   const key = process.env.KWEATHER_API_KEY;
-  const wc = String(req.query.worldcode || "15107");
+  const sensor = String(req.query.sensor || "kw-world-rt1");
+  const code = req.query.code != null ? String(req.query.code) : (req.query.worldcode != null ? String(req.query.worldcode) : "");
   if (!key) return res.status(503).json({ error: "no KWEATHER_API_KEY on server" });
-  const out = { base, worldcode: wc, keyLen: key.length };
+  const out = { base, sensor, code, keyLen: key.length };
   try {
-    const url = `${base}/kw-world-rt1/${encodeURIComponent(wc)}?api_key=${encodeURIComponent(key)}`;
+    const url = code
+      ? `${base}/${sensor}/${encodeURIComponent(code)}?api_key=${encodeURIComponent(key)}`
+      : `${base}/${sensor}?api_key=${encodeURIComponent(key)}`;
     const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
     out.httpStatus = r.status;
     out.ok = r.ok;
