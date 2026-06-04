@@ -267,9 +267,35 @@ function wireDappSearch() {
   box.addEventListener("blur", () => setTimeout(() => (list.style.display = "none"), 200));
 }
 
+async function loadDecisionProducts() {
+  try {
+    const j = await (await fetch("/api/decision")).json();
+    const sel = $("decProduct");
+    if (sel) (j.products || []).forEach((p) => sel.add(new Option(`${p.emoji} ${p.name}`, p.id)));
+  } catch { /* non-fatal */ }
+}
+async function runDecision() {
+  const city = ($("decCity").value || "Jakarta").trim();
+  const product = $("decProduct").value;
+  await withBusy($("decBtn"), "결정 중…", async () => {
+    const u = `/api/decision?city=${encodeURIComponent(city)}` + (product ? `&product=${encodeURIComponent(product)}` : "");
+    const j = await (await fetch(u)).json();
+    if (j.error) { $("decResult").textContent = "에러: " + j.error; return; }
+    const src = j.onchain ? `⛓️ 온체인 #${j.regionCode}` : `${j.source} (폴백)`;
+    const o = j.observation || {};
+    const head = `📍 ${j.city} · ${src} · ${j.samples}개 표본\n기온 ${o.temperature}℃ · 습도 ${o.humidity}% · PM2.5 ${o.pm25} · UV ${o.uvIndex}\n`;
+    const body = (j.decisions || []).map((d) =>
+      `${d.emoji} ${d.name} [${d.sector}]\n   → ${d.signal} (${Math.round(d.score * 100)}%) · ${d.action}\n   ${d.rationale}`
+    ).join("\n\n");
+    $("decResult").innerHTML = (head + "\n" + body).replace(/\n/g, "<br>");
+  });
+}
+
 function main() {
   $("regionSel").innerHTML = FEATURED.map((c) => `<option value="${c.id}">${c.name}, ${c.cc}</option>`).join("");
   wireDappSearch();
+  loadDecisionProducts();
+  $("decBtn")?.addEventListener("click", runDecision);
   if (!CFG) { notDeployed(); return; }
   $("netBadge").textContent = `${CFG.chainName} · 실제 온체인`;
   $("walletHint").textContent = `${CFG.chainName} 지갑(MetaMask 등)을 연결하세요. 가스비는 테스트넷 ${CFG.currency || "tBNB"}입니다.`;

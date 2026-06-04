@@ -8,6 +8,7 @@
 // Env: RPC_URL, AGENT_PRIVATE_KEY, ORACLE_ADDRESS, SUBSCRIPTION_ADDRESS, TOKEN_ADDRESS
 
 const { ethers } = require("ethers");
+const DP = require("../lib/decision-products");
 
 // Featured global cities (GeoNames id → label). The agent rotates through these.
 const REGIONS = { 1796236: "Shanghai, CN", 745044: "Istanbul, TR", 2332459: "Lagos, NG", 1566083: "Ho Chi Minh City, VN", 1275339: "Mumbai, IN", 3448439: "São Paulo, BR", 3530597: "Mexico City, MX", 524901: "Moscow, RU", 1185241: "Dhaka, BD", 1642911: "Jakarta, ID" };
@@ -69,8 +70,11 @@ module.exports = async (req, res) => {
     if (!AGENT_PRIVATE_KEY || !ORACLE_ADDRESS) {
       return res.status(503).json({ error: "agent not configured" });
     }
+    // which decision product to run (default: solar energy trading)
+    const product = req.query.product && DP.get(req.query.product) ? String(req.query.product) : "solar-yield";
+
     // serve cached activity if called again quickly (avoid draining quota/gas)
-    if (_cache && Date.now() - _last < 60_000) {
+    if (_cache && _cache.product === product && Date.now() - _last < 60_000) {
       return res.status(200).json({ ..._cache, cached: true });
     }
 
@@ -101,6 +105,7 @@ module.exports = async (req, res) => {
     if (count === 0) return res.status(503).json({ error: "no on-chain data yet — relayer must run first" });
     const hist = (await oracle.peekHistory(code, Math.min(24, count))).map(unscale);
     const f = forecast(hist);
+    const dec = DP.decide(product, hist[hist.length - 1], hist); // chosen decision product
 
     // 3) metered query — pay & use
     const q = await oracle.queryLatest(code);
@@ -113,8 +118,10 @@ module.exports = async (req, res) => {
       region: REGIONS[code],
       regionCode: code,
       samples: hist.length,
+      product,
       forecast: f,
-      decision: f.action,
+      decision: dec.action,
+      decisionDetail: dec,
       paidThisRun: paid,
       queryTxHash: q.hash,
       block: receipt.blockNumber,

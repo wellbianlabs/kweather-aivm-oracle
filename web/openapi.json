@@ -48,8 +48,25 @@
     },
     "/api/agent": {
       "get": {
-        "summary": "Autonomous agent demo: subscribes, pays, queries on-chain, returns a forecast decision",
-        "responses": { "200": { "description": "agent activity + tx hashes" } }
+        "summary": "Autonomous agent demo: subscribes, pays, queries on-chain, returns a decision",
+        "parameters": [
+          { "name": "product", "in": "query", "schema": { "type": "string" }, "description": "decision product id (default solar-yield)" }
+        ],
+        "responses": { "200": { "description": "agent activity + decision + tx hashes" } }
+      }
+    },
+    "/api/decision": {
+      "get": {
+        "summary": "On-chain weather decision products",
+        "description": "Reads the oracle's stored observations for a city and runs decision products (energy, agriculture, insurance, logistics, safety, tourism). No params -> product catalog. Falls back to the live feed for cities not yet on-chain.",
+        "parameters": [
+          { "name": "city", "in": "query", "schema": { "type": "string" }, "description": "city name or on-chain id; omit for the catalog" },
+          { "name": "product", "in": "query", "schema": { "type": "string" }, "description": "decision product id; omit to run all" },
+          { "name": "code", "in": "query", "schema": { "type": "string" } },
+          { "name": "lat", "in": "query", "schema": { "type": "number" } },
+          { "name": "lon", "in": "query", "schema": { "type": "number" } }
+        ],
+        "responses": { "200": { "description": "{ city, regionCode, source, observation, decisions:[{product, signal, action, score, rationale, metrics}] }" } }
       }
     },
     "/api/paid-weather": {

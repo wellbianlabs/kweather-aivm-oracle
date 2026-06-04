@@ -49,6 +49,33 @@ Two settlement rails are offered (each `accepts` entry carries `extra.id / symbo
 
 Reference client: `scripts/x402-client.mjs "Tokyo" [asset]`; MCP tool: `pay_x402(city, asset?)`.
 
+## On-chain decision products
+
+The oracle's weather is turned into actionable, domain-specific decisions by a catalog of
+**decision products** — `GET /api/decision?city=<name|id>` runs them all for a city (or
+`&product=<id>` for one); `GET /api/decision` returns the catalog. Each product reads the
+**on-chain** oracle data (free peek) and returns `{ signal, action, score(0..1), rationale, metrics }`:
+
+| id | sector | decides |
+|---|---|---|
+| `solar-yield` | Energy | PV output → SELL_POWER / HOLD / BUY_HEDGE |
+| `wind-dispatch` | Energy | turbine power → DISPATCH / PARTIAL / CURTAIL |
+| `crop-irrigation` | Agriculture | water deficit → IRRIGATE_NOW / SKIP / drought alert |
+| `flood-watch` | Insurance/Safety | rain accumulation → CLEAR / WATCH / WARNING |
+| `heat-demand-response` | Utilities | cooling load → NORMAL / PEAK_SHAVE / EMERGENCY_DR |
+| `cold-chain` | Logistics | transport temp → OK / MONITOR / REROUTE |
+| `air-quality-ops` | HSE | PM2.5/PM10 → GO / LIMIT / HALT |
+| `uv-advisory` | Health/Retail | UV index → protection level |
+| `construction-safety` | Construction | wind/rain/heat → WORK / CAUTION / STOP |
+| `event-hedge` | Insurance/Events | rain/wind → CONFIRM / HEDGE / POSTPONE-PAYOUT |
+| `tourism-comfort` | Travel | comfort score → dynamic pricing |
+| `wildfire-risk` | Insurance/Safety | fire weather → LOW / ELEVATED / RED_FLAG |
+
+The autonomous agent (`GET /api/agent?product=<id>`) pays on-chain (subscribe + metered
+`queryLatest`) and returns the chosen product's decision. MCP tools: `list_decision_products()`,
+`decide(city, product?)`. Decisions are derived from on-chain data; consuming the underlying feed
+settles via metered `queryLatest` or x402.
+
 ## Live
 - App: https://kweather-aivm-oracle-wellbianlabs.vercel.app
 - dApp: https://kweather-aivm-oracle-wellbianlabs.vercel.app/dapp

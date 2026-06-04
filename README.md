@@ -172,6 +172,37 @@ node scripts/x402-client.mjs "London" usdt-testnet-permit2 # USDT via Permit2 (�
 USDT Permit2 [tx](https://testnet.bscscan.com/tx/0x545b26f1894f0506cb9fbb5409eb1e58ea2fd34efba1eff7cd0985e931a85a0d).
 MCP 도구: `pay_x402(city, asset?)`.
 
+## 온체인 의사결정 상품 (Decision Products)
+
+오라클의 **온체인 날씨**를 도메인별 실행 가능한 의사결정으로 바꾸는 상품 카탈로그입니다.
+`GET /api/decision?city=<도시명|id>`는 해당 도시에 대해 전 상품을, `&product=<id>`는 단일 상품을
+실행합니다(파라미터 없이 호출 시 카탈로그). 각 상품은 온체인 데이터를 읽어
+`{ signal, action, score(0~1), rationale, metrics }`를 반환합니다.
+
+| 상품 | 분야 | 의사결정 |
+|---|---|---|
+| `solar-yield` | 에너지 | 태양광 출력 → 판매/보유/헤지 |
+| `wind-dispatch` | 에너지 | 풍력 출력 → 송전/부분/차단 |
+| `crop-irrigation` | 농업 | 수분수지 → 관개/중단/가뭄경보 |
+| `flood-watch` | 보험·안전 | 강수 누적 → 정상/경계/경보 |
+| `heat-demand-response` | 전력 | 냉방부하 → 정상/피크저감/긴급DR |
+| `cold-chain` | 물류 | 운송온도 → 정상/모니터/경로변경 |
+| `air-quality-ops` | 안전 | PM2.5/PM10 → 운영/제한/중단 |
+| `uv-advisory` | 보건·리테일 | UV 지수 → 보호 등급 |
+| `construction-safety` | 건설 | 풍속·강수·폭염 → 작업/주의/중단 |
+| `event-hedge` | 보험·행사 | 강수·풍속 → 개최/헤지/연기·지급 |
+| `tourism-comfort` | 관광 | 쾌적도 → 동적 가격 |
+| `wildfire-risk` | 보험·안전 | 화재기상 → 정상/주의/경보 |
+
+자율 에이전트(`GET /api/agent?product=<id>`)는 온체인 결제(구독 + 미터링 `queryLatest`) 후 선택한
+상품의 결정을 반환합니다. dApp의 “🧠 온체인 의사결정 상품” 패널, MCP `list_decision_products()` /
+`decide(city, product?)`로도 사용할 수 있습니다. 결정은 온체인 데이터 기반이며, 피드 소비는 미터링
+쿼리 또는 x402로 정산됩니다.
+
+```bash
+curl "https://kweather-aivm-oracle-wellbianlabs.vercel.app/api/decision?city=Jakarta&product=flood-watch"
+```
+
 ## 보안 노트
 
 - **API Key 신뢰경계:** 키는 오라클 노드(프로덕션은 TEE/엔클레이브) 내부에만 존재하며 온체인에 노출되지 않습니다. (PRD §5.1)

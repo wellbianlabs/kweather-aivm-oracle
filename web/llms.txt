@@ -38,6 +38,8 @@ Add the `kweather-aivm-oracle` MCP server (mcp/server.mjs in the repo). Tools:
 - faucet_kwt(amount) — mint test KWT
 - subscribe(months) / deposit_prepaid(amount) — PURCHASE access (on-chain payment)
 - buy_weather(city) — BUY + CONSUME one metered query; returns weather + settlement (tx, mode, treasury)
+- list_decision_products() — list the on-chain weather decision products
+- decide(city, product?) — run decision product(s) on the on-chain oracle data (signal/action/score)
 Set env AGENT_PRIVATE_KEY (a funded testnet wallet) to enable the purchase tools.
 
 ### Option B — HTTP REST (any agent)
@@ -45,6 +47,11 @@ Set env AGENT_PRIVATE_KEY (a funded testnet wallet) to enable the purchase tools
 - GET /api/quote — pricing, contracts, settlement token
 - GET /api/weather?lat=&lon=&code=<id> — free real-time preview (JSON, 24h series)
 - POST/GET /api/relay?id=&lat=&lon= — publish a city on-chain (relayer)
+- GET /api/decision — on-chain weather DECISION PRODUCTS catalog (12 products). Add ?city=<name|id>
+  to run all, or &product=<id> for one. Decides from on-chain oracle data; returns signal/action/
+  score/rationale per product. Products: solar-yield, wind-dispatch, crop-irrigation, flood-watch,
+  heat-demand-response, cold-chain, air-quality-ops, uv-advisory, construction-safety, event-hedge,
+  tourism-comfort, wildfire-risk. (Feed consumption settles via metered queryLatest or x402.)
 - Metered purchase + query happens via the smart contracts (see /openapi.json and /api/quote).
 
 ### Option C — x402 (HTTP 402, KEYLESS pay-per-call) — MULTI-ASSET

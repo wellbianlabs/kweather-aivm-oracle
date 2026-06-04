@@ -345,6 +345,27 @@ server.tool(
   }
 );
 
+server.tool(
+  "list_decision_products",
+  "List the on-chain weather decision products — each turns the oracle's weather into an actionable business decision (energy trading, irrigation, flood/wildfire/heat risk, cold-chain, air-quality, construction safety, event hedging, tourism pricing…).",
+  {},
+  async () => {
+    const r = await fetch(`${CFG.site}/api/decision`);
+    return ok(await r.json());
+  }
+);
+
+server.tool(
+  "decide",
+  "Run weather decision product(s) for a city using ON-CHAIN oracle data. Returns each product's signal, action, score (0..1) and rationale. `product` is optional (omit = run all). Examples: flood-watch, solar-yield, air-quality-ops, crop-irrigation, wildfire-risk, heat-demand-response.",
+  { city: z.string().describe("city name or on-chain id"), product: z.string().optional().describe("decision product id; omit to run all") },
+  async ({ city, product }) => {
+    const u = `${CFG.site}/api/decision?city=${encodeURIComponent(city)}` + (product ? `&product=${encodeURIComponent(product)}` : "");
+    const r = await fetch(u);
+    return ok(await r.json());
+  }
+);
+
 const transport = new StdioServerTransport();
 await server.connect(transport);
 console.error("kweather-aivm-oracle MCP server ready (stdio)");

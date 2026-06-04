@@ -109,6 +109,18 @@
       </div>
     </div>
 
+    <!-- decision products -->
+    <div class="panel" style="margin-top:16px">
+      <h3>🧠 온체인 의사결정 상품</h3>
+      <div class="hint">오라클의 <b>온체인 날씨</b>로 도메인별 의사결정을 산출합니다 — 에너지·농업·보험·물류·안전·관광. 결정은 온체인 데이터 기반이며, 피드 소비는 미터링 쿼리/x402로 결제됩니다.</div>
+      <div class="btn-row" style="margin:10px 0;flex-wrap:wrap;gap:8px">
+        <select id="decProduct"><option value="">전체 상품</option></select>
+        <input id="decCity" type="text" placeholder="도시 (예: Jakarta, Bangkok, Hanoi)" value="Jakarta" style="min-width:220px" />
+        <button id="decBtn" class="btn">결정 실행</button>
+      </div>
+      <div id="decResult" class="log">상품과 도시를 선택하고 “결정 실행”을 누르세요.</div>
+    </div>
+
     <p style="color:var(--muted);font-size:12px;margin:22px 0 60px">
       ⚠️ 테스트넷 데모입니다. KWT는 무가치 테스트 토큰이며, 가스비는 <span id="footChain">BNB Smart Chain Testnet</span>의 <span id="footCurrency">tBNB</span>입니다.
       모든 거래는 <a id="explorerFoot" class="ext" href="#" target="_blank">블록 탐색기</a>에서 검증할 수 있습니다.
