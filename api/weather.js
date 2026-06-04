@@ -198,7 +198,13 @@ async function fetchKWeatherWorld(worldCode) {
   };
 }
 
-const num = (v) => (v === null || v === undefined || Number.isNaN(Number(v)) ? 0 : Number(v));
+// coalescing numeric parse: returns the first usable value (supports fallback field names)
+const num = (...xs) => {
+  for (const v of xs) {
+    if (v !== null && v !== undefined && v !== "" && !Number.isNaN(Number(v))) return Number(v);
+  }
+  return 0;
+};
 const r1 = (x) => Math.round(x * 10) / 10;
 const r2 = (x) => Math.round(x * 100) / 100;
 const discomfort = (t, h) => 0.81 * t + 0.01 * h * (0.99 * t - 14.3) + 46.3;
