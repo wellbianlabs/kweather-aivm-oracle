@@ -3,7 +3,7 @@
 //   GET /api/_kwdiag?worldcode=15107
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  const base = process.env.KWEATHER_API_URL || "https://gateway.kweather.co.kr/weather/w3/v2/kw-sensors";
+  const base = req.query.base ? String(req.query.base) : (process.env.KWEATHER_API_URL || "https://gateway.kweather.co.kr/weather/w3/v2/kw-sensors");
   const key = process.env.KWEATHER_API_KEY;
   const wc = String(req.query.worldcode || "15107");
   if (!key) return res.status(503).json({ error: "no KWEATHER_API_KEY on server" });
