@@ -24,7 +24,7 @@ const SEA = ["ID", "TH", "VN", "PH", "MY", "SG", "KH", "LA", "MM", "BN", "TL"];
 const ORACLE_ABI = [
   `function pushBatch(uint256[] regionCodes, ${ORACLE_TUPLE}[] data) external`,
   "function regionCount() view returns (uint256)",
-  `function peekLatest(uint256) view returns ${ORACLE_TUPLE}`,
+  `function peekLatest(uint256) view returns (${ORACLE_TUPLE})`,
   "function relayers(address) view returns (bool)",
 ];
 

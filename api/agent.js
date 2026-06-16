@@ -15,8 +15,8 @@ const REGIONS = { 1796236: "Shanghai, CN", 745044: "Istanbul, TR", 2332459: "Lag
 
 const { unscale, ORACLE_TUPLE } = require("../lib/world-scale");
 const ORACLE_ABI = [
-  `function queryLatest(uint256) returns ${ORACLE_TUPLE}`,
-  `function peekHistory(uint256,uint256) view returns ${ORACLE_TUPLE}[]`,
+  `function queryLatest(uint256) returns (${ORACLE_TUPLE})`,
+  `function peekHistory(uint256,uint256) view returns (${ORACLE_TUPLE}[])`,
   "function observationCount(uint256) view returns (uint256)",
 ];
 const SM_ABI = [

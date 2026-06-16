@@ -16,8 +16,8 @@ const { unscale, ORACLE_TUPLE } = require("../lib/world-scale");
 
 const ORACLE_ABI = [
   "function observationCount(uint256) view returns (uint256)",
-  `function peekLatest(uint256) view returns ${ORACLE_TUPLE}`,
-  `function peekHistory(uint256,uint256) view returns ${ORACLE_TUPLE}[]`,
+  `function peekLatest(uint256) view returns (${ORACLE_TUPLE})`,
+  `function peekHistory(uint256,uint256) view returns (${ORACLE_TUPLE}[])`,
 ];
 
 function resolveCity(req) {

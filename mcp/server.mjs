@@ -86,10 +86,10 @@ const SM_ABI = [
   "function queriesPerMonth() view returns (uint256)",
 ];
 const ORACLE_ABI = [
-  `function peekLatest(uint256) view returns ${ORACLE_TUPLE}`,
+  `function peekLatest(uint256) view returns (${ORACLE_TUPLE})`,
   "function observationCount(uint256) view returns (uint256)",
   "function getRegions() view returns (uint256[])",
-  `function queryLatest(uint256) returns ${ORACLE_TUPLE}`,
+  `function queryLatest(uint256) returns (${ORACLE_TUPLE})`,
 ];
 
 const provider = new ethers.JsonRpcProvider(CFG.rpc);
