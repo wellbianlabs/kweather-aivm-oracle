@@ -3,50 +3,68 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>KWeather × AIVM — 온체인 기상 데이터 오라클</title>
-  <meta name="description" content="케이웨더 프리미엄 API 기반 AIVM 온체인 기상 데이터 오라클 인프라. 실시간 인터랙티브 데모." />
-  <meta property="og:title" content="KWeather × AIVM 온체인 기상 오라클" />
-  <meta property="og:description" content="케이웨더 프리미엄 기상 데이터를 AI 에이전트가 신뢰하는 온체인 오라클로." />
+  <title>KWeather × AIVM — On-chain Weather Oracle</title>
+  <meta name="description" content="K-Weather 세계날씨 기반 AIVM 온체인 기상 데이터 오라클 인프라." />
+  <meta property="og:title" content="KWeather × AIVM On-chain Weather Oracle" />
+  <meta property="og:description" content="K-Weather weather data as a trusted on-chain oracle for AI agents." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛰️</text></svg>" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2338bdf8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><path d='M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18'/></svg>" />
 </head>
 <body>
   <div class="bg-grid"></div>
+
+  <!-- icon sprite (simple, premium line icons) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <g id="i-globe" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></g>
+      <g id="i-cloud" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a4 4 0 0 1 0-8 5.5 5.5 0 0 1 10.6-1.4A3.8 3.8 0 0 1 18 18z"/></g>
+      <g id="i-shield" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 7.6-7 9-4-1.4-7-4.5-7-9V6z"/><path d="M9.5 12l1.8 1.8 3.4-3.6"/></g>
+      <g id="i-link" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 15l6-6"/><path d="M10.5 6.5l1.2-1.2a3.5 3.5 0 0 1 5 5l-1.2 1.2"/><path d="M13.5 17.5l-1.2 1.2a3.5 3.5 0 0 1-5-5l1.2-1.2"/></g>
+      <g id="i-cpu" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="2"/><path d="M10 4v2M14 4v2M10 18v2M14 18v2M4 10h2M4 14h2M18 10h2M18 14h2"/></g>
+      <g id="i-bolt" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3L5 13h6l-1 8 8-10h-6z"/></g>
+      <g id="i-leaf" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c0-7 5-12 14-12 0 9-5 14-12 14-1.5 0-2-1-2-2z"/><path d="M9 17c2-3 4-5 7-6"/></g>
+      <g id="i-truck" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h11v8H3zM14 10h4l3 3v2h-7z"/><circle cx="7" cy="17" r="1.6"/><circle cx="17.5" cy="17" r="1.6"/></g>
+      <g id="i-search" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6"/><path d="M20 20l-3.5-3.5"/></g>
+    </defs>
+  </svg>
 
   <!-- NAV -->
   <header class="nav">
     <div class="nav-inner">
       <div class="brand">
-        <span class="brand-mark">🛰️</span>
+        <span class="brand-mark"><svg viewBox="0 0 24 24"><use href="#i-globe"/></svg></span>
         <span class="brand-text">KWeather <span class="x">×</span> AIVM <span class="brand-sub">Oracle</span></span>
       </div>
       <nav class="nav-links">
-        <a href="#pipeline">파이프라인</a>
-        <a href="#feed">라이브 피드</a>
-        <a href="#agents">AI 에이전트</a>
-        <a href="#money">수익화</a>
-        <a href="/dapp" class="nav-gh" style="background:linear-gradient(135deg,#34d399,#10b981)">온체인 dApp ↗</a>
+        <a href="#pipeline" data-en="Pipeline">파이프라인</a>
+        <a href="#feed" data-en="Live feed">라이브 피드</a>
+        <a href="#agents" data-en="AI agents">AI 에이전트</a>
+        <a href="#money" data-en="Monetization">수익화</a>
+        <a href="/dapp" class="nav-gh" style="background:linear-gradient(135deg,#34d399,#10b981)" data-en="On-chain dApp ↗">온체인 dApp ↗</a>
         <a id="ghLink" class="nav-gh" href="#" target="_blank" rel="noopener">GitHub ↗</a>
+        <button id="langBtn" class="lang-btn" type="button">EN</button>
       </nav>
     </div>
   </header>
 
   <!-- HERO -->
   <section class="hero">
-    <div class="hero-badge"><span class="dot"></span> 케이웨더 세계날씨 실황 기반 라이브 데모</div>
-    <h1>AI 에이전트가 가장 신뢰하는<br /><span class="grad">전 세계 온체인 정밀 기상 인프라</span></h1>
-    <p class="hero-sub">
+    <div class="hero-badge"><span class="dot"></span> <span data-en="Live demo on K-Weather world weather">케이웨더 세계날씨 실황 기반 라이브 데모</span></div>
+    <h1 data-en-html="The on-chain precision weather<br /><span class='grad'>infrastructure AI agents trust most</span>">AI 에이전트가 가장 신뢰하는<br /><span class="grad">전 세계 온체인 정밀 기상 인프라</span></h1>
+    <p class="hero-sub" data-en="Real-time weather for 4,255 world cities, supplied on-chain to EVM/AIVM networks and consumed by autonomous AI agents via subscription or pay-per-query. (Data: K-Weather world weather — temperature, humidity, wind, precipitation.)">
       전 세계 <strong>4,255개 도시</strong>의 실시간 기상 데이터를 EVM/AIVM 호환 네트워크에 온체인 오라클로 공급하고,
       자율형 AI 에이전트가 구독·종량제로 안전하게 소비합니다. (데이터: 케이웨더 세계날씨 — 기온·습도·바람·강수)
     </p>
     <div class="okr">
-      <span class="chip">🌏 전 세계 4,255개 도시</span>
-      <span class="chip">실시간 온체인 피드</span>
-      <span class="chip">호출당 과금 / 구독</span>
-      <span class="chip">시계열·텐서 친화 포맷</span>
+      <span class="chip" data-en="4,255 world cities">전 세계 4,255개 도시</span>
+      <span class="chip" data-en="Real-time on-chain feed">실시간 온체인 피드</span>
+      <span class="chip" data-en="Pay-per-query / subscription">호출당 과금 / 구독</span>
+      <span class="chip" data-en="Time-series · tensor-friendly">시계열·텐서 친화 포맷</span>
     </div>
   </section>
 
@@ -54,46 +72,45 @@
   <section class="controls" id="controls">
     <div class="ctrl-row">
       <div class="ctrl-time">
-        <label>관측 시각 (UTC) <strong id="hourLabel">12:00</strong></label>
+        <label><span data-en="Observation hour (UTC)">관측 시각 (UTC)</span> <strong id="hourLabel">12:00</strong></label>
         <input id="hourSlider" type="range" min="0" max="23" value="12" />
       </div>
-      <button id="playBtn" class="btn-play">▶ 자동 재생</button>
       <div class="ctrl-meta">
-        <span class="meta-pill">데이터 소스 <b id="srcPill">로딩…</b></span>
-        <span class="meta-pill">판매 카탈로그 <b>전 세계 4,255개 도시</b></span>
+        <span class="meta-pill"><span data-en="Data source">데이터 소스</span> <b id="srcPill">…</b></span>
+        <span class="meta-pill"><span data-en="Catalog">판매 카탈로그</span> <b data-en="4,255 world cities">전 세계 4,255개 도시</b></span>
       </div>
     </div>
   </section>
 
   <!-- PIPELINE -->
   <section class="pipeline" id="pipeline">
-    <h2 class="sec-title">온체인 오라클 파이프라인</h2>
+    <h2 class="sec-title" data-en="On-chain oracle pipeline">온체인 오라클 파이프라인</h2>
     <div class="flow">
       <div class="flow-step">
-        <div class="flow-ico">🌦️</div>
-        <div class="flow-name">케이웨더 프리미엄 API</div>
-        <div class="flow-desc">Web2 JSON · 부동소수점</div>
+        <div class="flow-ico"><svg viewBox="0 0 24 24"><use href="#i-cloud"/></svg></div>
+        <div class="flow-name" data-en="K-Weather API">케이웨더 프리미엄 API</div>
+        <div class="flow-desc" data-en="Web2 JSON · float">Web2 JSON · 부동소수점</div>
         <code class="flow-code" id="flowRaw">temp 23.45 ℃</code>
       </div>
       <div class="flow-arrow">→</div>
       <div class="flow-step">
-        <div class="flow-ico">🔒</div>
-        <div class="flow-name">오라클 노드 (TEE)</div>
-        <div class="flow-desc">정제 · 고정소수점 스케일링</div>
+        <div class="flow-ico"><svg viewBox="0 0 24 24"><use href="#i-shield"/></svg></div>
+        <div class="flow-name" data-en="Oracle node (TEE)">오라클 노드 (TEE)</div>
+        <div class="flow-desc" data-en="Normalize · fixed-point scaling">정제 · 고정소수점 스케일링</div>
         <code class="flow-code" id="flowScaled">×100 → 2345</code>
       </div>
       <div class="flow-arrow">→</div>
       <div class="flow-step">
-        <div class="flow-ico">⛓️</div>
-        <div class="flow-name">온체인 레지스트리</div>
-        <div class="flow-desc">지역코드 O(1) · 시계열 링버퍼</div>
+        <div class="flow-ico"><svg viewBox="0 0 24 24"><use href="#i-link"/></svg></div>
+        <div class="flow-name" data-en="On-chain registry">온체인 레지스트리</div>
+        <div class="flow-desc" data-en="O(1) by region · ring buffer">지역코드 O(1) · 시계열 링버퍼</div>
         <code class="flow-code">pushBatch()</code>
       </div>
       <div class="flow-arrow">→</div>
       <div class="flow-step">
-        <div class="flow-ico">🤖</div>
-        <div class="flow-name">AI 에이전트</div>
-        <div class="flow-desc">구독/종량제 미터링 쿼리</div>
+        <div class="flow-ico"><svg viewBox="0 0 24 24"><use href="#i-cpu"/></svg></div>
+        <div class="flow-name" data-en="AI agents">AI 에이전트</div>
+        <div class="flow-desc" data-en="Metered subscription / pay-per-query">구독/종량제 미터링 쿼리</div>
         <code class="flow-code">queryHistory()</code>
       </div>
     </div>
@@ -101,9 +118,10 @@
 
   <!-- LIVE FEED -->
   <section class="feed" id="feed">
-    <h2 class="sec-title">전 세계 도시 실시간 기상 피드 <span class="sec-sub">판매 가능 4,255개 도시 · 도시명으로 검색</span></h2>
+    <h2 class="sec-title"><span data-en="World cities — live weather feed">전 세계 도시 실시간 기상 피드</span> <span class="sec-sub" data-en="4,255 cities · search by name">판매 가능 4,255개 도시 · 도시명으로 검색</span></h2>
     <div class="city-search">
-      <input id="citySearch" type="text" placeholder="🔎 도시 검색 (예: Tokyo, London, Paris, Dubai…) — 4,255개 도시" autocomplete="off" />
+      <span class="search-ico"><svg viewBox="0 0 24 24"><use href="#i-search"/></svg></span>
+      <input id="citySearch" type="text" placeholder="도시 검색 (예: Tokyo, London, Paris, Dubai…)" data-en-ph="Search a city (e.g. Tokyo, London, Paris, Dubai…)" autocomplete="off" />
       <div id="searchResults" class="search-results"></div>
     </div>
     <div class="region-grid" id="regionGrid"></div>
@@ -113,11 +131,11 @@
   <section class="struct-sec">
     <div class="struct-grid">
       <div class="struct-card">
-        <h3>온체인 데이터 구조체 <span class="sec-sub" id="structRegion"></span></h3>
+        <h3><span data-en="On-chain data struct">온체인 데이터 구조체</span> <span class="sec-sub" id="structRegion"></span></h3>
         <pre class="code-block" id="structCode"></pre>
       </div>
       <div class="struct-card">
-        <h3>플로트 → 고정소수점 변환</h3>
+        <h3 data-en="Float → fixed-point conversion">플로트 → 고정소수점 변환</h3>
         <div class="scale-table" id="scaleTable"></div>
       </div>
     </div>
@@ -125,18 +143,18 @@
 
   <!-- AGENTS -->
   <section class="agents" id="agents">
-    <h2 class="sec-title">자율 AI 에이전트의 온체인 의사결정</h2>
+    <h2 class="sec-title" data-en="Autonomous AI agent on-chain decisions">자율 AI 에이전트의 온체인 의사결정</h2>
     <div class="agent-grid">
       <div class="agent-card energy">
-        <div class="agent-head"><span class="agent-ico">⚡</span><div><div class="agent-name">신재생 에너지 예측</div><div class="agent-tag">구독 모델 · PRD §4.1</div></div></div>
+        <div class="agent-head"><span class="agent-ico"><svg viewBox="0 0 24 24"><use href="#i-bolt"/></svg></span><div><div class="agent-name" data-en="Renewable energy forecasting">신재생 에너지 예측</div><div class="agent-tag" data-en="Subscription · PRD §4.1">구독 모델 · PRD §4.1</div></div></div>
         <div class="agent-body" id="energyBody"></div>
       </div>
       <div class="agent-card agri">
-        <div class="agent-head"><span class="agent-ico">🌾</span><div><div class="agent-name">애그리테크 트레이딩</div><div class="agent-tag">종량제 · PRD §4.2</div></div></div>
+        <div class="agent-head"><span class="agent-ico"><svg viewBox="0 0 24 24"><use href="#i-leaf"/></svg></span><div><div class="agent-name" data-en="Agritech trading">애그리테크 트레이딩</div><div class="agent-tag" data-en="Pay-per-query · PRD §4.2">종량제 · PRD §4.2</div></div></div>
         <div class="agent-body" id="agriBody"></div>
       </div>
       <div class="agent-card logi">
-        <div class="agent-head"><span class="agent-ico">🚚</span><div><div class="agent-name">물류 · 배송 보험</div><div class="agent-tag">종량제 · PRD §4.3</div></div></div>
+        <div class="agent-head"><span class="agent-ico"><svg viewBox="0 0 24 24"><use href="#i-truck"/></svg></span><div><div class="agent-name" data-en="Logistics · delivery insurance">물류 · 배송 보험</div><div class="agent-tag" data-en="Pay-per-query · PRD §4.3">종량제 · PRD §4.3</div></div></div>
         <div class="agent-body" id="logiBody"></div>
       </div>
     </div>
@@ -144,22 +162,22 @@
 
   <!-- MONETIZATION -->
   <section class="money" id="money">
-    <h2 class="sec-title">수익화 · 가입형 가스비 구조</h2>
+    <h2 class="sec-title" data-en="Monetization · gas model">수익화 · 가입형 가스비 구조</h2>
     <div class="money-grid">
       <div class="money-card">
-        <div class="money-k">구독 (Subscription)</div>
-        <div class="money-v">100 <span>KWT / 월</span></div>
-        <div class="money-d">월 1,000 쿼리 한도(레이트리밋) 내 자유 호출</div>
+        <div class="money-k" data-en="Subscription">구독 (Subscription)</div>
+        <div class="money-v">100 <span data-en="KWT / month">KWT / 월</span></div>
+        <div class="money-d" data-en="Free calls within a 1,000-query monthly rate limit">월 1,000 쿼리 한도(레이트리밋) 내 자유 호출</div>
       </div>
       <div class="money-card">
-        <div class="money-k">종량제 (Pay-per-query)</div>
-        <div class="money-v">1 <span>KWT / 호출</span></div>
-        <div class="money-d">1회성 정밀 분석용 · 선불 예치 후 호출당 차감</div>
+        <div class="money-k" data-en="Pay-per-query">종량제 (Pay-per-query)</div>
+        <div class="money-v">1 <span data-en="KWT / query">KWT / 호출</span></div>
+        <div class="money-d" data-en="For one-off precise analysis · prepaid, debited per call">1회성 정밀 분석용 · 선불 예치 후 호출당 차감</div>
       </div>
       <div class="money-card accent">
-        <div class="money-k">Treasury 누적 정산</div>
+        <div class="money-k" data-en="Treasury settlement">Treasury 누적 정산</div>
         <div class="money-v"><span id="treasury">110</span> <span>KWT</span></div>
-        <div class="money-d">에이전트 결제가 트레저리로 자동 집계</div>
+        <div class="money-d" data-en="Agent payments auto-accrue to the treasury">에이전트 결제가 트레저리로 자동 집계</div>
       </div>
     </div>
   </section>
@@ -168,19 +186,20 @@
   <footer class="footer">
     <div class="footer-inner">
       <div>
-        <div class="f-brand">🛰️ KWeather × AIVM Oracle</div>
-        <p class="f-note">
+        <div class="f-brand"><span class="f-ico"><svg viewBox="0 0 24 24"><use href="#i-globe"/></svg></span> KWeather × AIVM Oracle</div>
+        <p class="f-note" data-en="Weather data is real-time — the /api/weather serverless proxy fetches realtime + time-series values from the K-Weather world-weather gateway. The Solidity contracts (KWeatherOracle / SubscriptionManager), oracle node and passing tests are in the GitHub repo.">
           기상 데이터는 <b>실시간</b>입니다 — `/api/weather` 서버리스 프록시가 케이웨더 세계날씨 게이트웨이에서
-          실황·시계열 값을 가져옵니다. 온체인 결제·구독 정산은 데모용 시뮬레이션이며, 실제 Solidity 컨트랙트
-          (KWeatherOracle / SubscriptionManager), 오라클 노드, 7개 통과 테스트는 GitHub 저장소에 있습니다.
+          실황·시계열 값을 가져옵니다. 실제 Solidity 컨트랙트 (KWeatherOracle / SubscriptionManager),
+          오라클 노드, 통과 테스트는 GitHub 저장소에 있습니다.
         </p>
       </div>
-      <a id="ghLinkFoot" class="f-gh" href="#" target="_blank" rel="noopener">소스 보기 on GitHub ↗</a>
+      <a id="ghLinkFoot" class="f-gh" href="#" target="_blank" rel="noopener" data-en="View source on GitHub ↗">소스 보기 on GitHub ↗</a>
     </div>
   </footer>
 
   <script src="cities.js"></script>
   <script src="featured.js"></script>
+  <script src="i18n.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

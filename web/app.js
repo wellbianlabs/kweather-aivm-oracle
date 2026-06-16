@@ -54,11 +54,10 @@ function mockHour(city, hour) {
 const mockSeries = (city) => Array.from({ length: 24 }, (_, h) => mockHour(city, h));
 
 // ---- data store ----
-const DATA = { source: "로딩…", real: false, byId: {} };
+const DATA = { source: "…", real: false, byId: {} };
 let WORKING = FEATURED.slice();
 let SELECTED = WORKING[0] ? WORKING[0].id : null;
 let IDX = 12;
-let playTimer = null;
 
 async function loadCity(city) {
   const wc = WORLDCODE[city.id] ? `&worldcode=${WORLDCODE[city.id]}` : "";
@@ -291,25 +290,16 @@ async function init() {
   document.getElementById("ghLinkFoot").href = GH_URL;
   wireSearch();
   const slider = document.getElementById("hourSlider");
-  const play = document.getElementById("playBtn");
 
   try {
     await loadReal();
     const maxIdx = lenOf(selCity()) - 1;
     slider.max = String(maxIdx); IDX = maxIdx;
   } catch (e) {
-    DATA.real = false; DATA.source = "MOCK (오프라인)"; slider.max = "23"; IDX = 12;
+    DATA.real = false; DATA.source = "MOCK (offline)"; slider.max = "23"; IDX = 12;
   }
   slider.value = IDX;
   slider.addEventListener("input", () => { IDX = Number(slider.value); renderAll(); });
-  play.addEventListener("click", () => {
-    if (playTimer) { clearInterval(playTimer); playTimer = null; play.textContent = "▶ 자동 재생"; play.classList.remove("on"); }
-    else {
-      play.textContent = "⏸ 일시정지"; play.classList.add("on");
-      const maxIdx = Number(slider.max);
-      playTimer = setInterval(() => { IDX = IDX >= maxIdx ? 0 : IDX + 1; slider.value = IDX; renderAll(); }, 1100);
-    }
-  });
   renderAll();
 }
 document.addEventListener("DOMContentLoaded", init);
