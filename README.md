@@ -6,7 +6,7 @@
 ### 배포된 컨트랙트 (BSC Testnet, chainId 97)
 | 컨트랙트 | 주소 |
 |---|---|
-| KWeatherOracle | [`0x62FFc95E32052B7Fdd6E969fc645e3F134Fd2F3C`](https://testnet.bscscan.com/address/0x62FFc95E32052B7Fdd6E969fc645e3F134Fd2F3C) |
+| KWeatherWorldOracle | [`0x2A2b4B6530ef062c80fCeEc23ae0d6167eAe9630`](https://testnet.bscscan.com/address/0x2A2b4B6530ef062c80fCeEc23ae0d6167eAe9630) |
 | SubscriptionManager | [`0xA34D6B699f16ed574A574a3E2b18ce063da4d911`](https://testnet.bscscan.com/address/0xA34D6B699f16ed574A574a3E2b18ce063da4d911) |
 | KWT 토큰 | [`0x04090599Dbaa990eabC37fFBDE223A4eD02e5b20`](https://testnet.bscscan.com/address/0x04090599Dbaa990eabC37fFBDE223A4eD02e5b20) |
 
@@ -106,18 +106,18 @@ npm run relayer
 ## 온체인 데이터 모델 (PRD §6.1)
 
 ```solidity
-struct KWeatherPremiumData {
+struct KWeatherWorldData {        // K-Weather 세계날씨 실측 필드만
     uint256 timestamp;       // 관측 유닉스 타임스탬프
-    int256  temperature;     // 기온  (℃ * 100)
-    uint256 humidity;        // 습도  (%)
-    uint256 precipitation;   // 강수량 (mm * 100)
-    uint256 windSpeed;       // 풍속  (m/s * 100)
-    uint256 windDirection;   // 풍향  (0-360)
-    uint256 pm10;            // 미세먼지   (㎍/㎥)
-    uint256 pm25;            // 초미세먼지 (㎍/㎥)
-    uint256 solarRadiation;  // 일사량 (MJ/m² * 100)
-    uint256 uvIndex;         // 자외선 지수 (* 10)
-    uint256 discomfortIndex; // 불쾌지수    (* 10)
+    int256  temperature;     // 기온    (℃ * 100)
+    int256  senseTemp;       // 체감온도 (℃ * 100)
+    uint256 humidity;        // 습도    (%)
+    uint256 precipitation;   // 강수량  (mm * 100)
+    uint256 windSpeed;       // 풍속    (m/s * 100)
+    uint256 windDirection;   // 풍향    (0-360)
+    uint256 pressure;        // 기압    (hPa * 100)
+    uint256 visibility;      // 가시거리 (m)
+    uint256 snowfall;        // 적설    (cm * 100)
+    uint256 discomfortIndex; // 불쾌지수 (* 10)
 }
 ```
 
@@ -187,6 +187,10 @@ MCP 도구: `pay_x402(city, asset?)`.
 | `heat-demand-response` | 전력 | 냉방부하 → 정상/피크저감/긴급DR |
 | `cold-chain` | 물류 | 운송온도 → 정상/모니터/경로변경 |
 | `construction-safety` | 건설 | 풍속·강수·폭염 → 작업/주의/중단 |
+| `heat-stress` | 보건·안전 | 체감온도 → 중단/제한/한랭경보 |
+| `storm-pressure` | 보험·해상 | 기압·풍속 → 폭풍/경계/안정 |
+| `visibility-ops` | 운송 | 가시거리 → 운항중단/감속/정상 |
+| `snow-ops` | 물류·공공 | 적설 → 제설투입/준비/정상 |
 | `event-hedge` | 보험·행사 | 강수·풍속 → 개최/헤지/연기·지급 |
 | `tourism-comfort` | 관광 | 쾌적도 → 동적 가격 |
 | `wildfire-risk` | 보험·안전 | 화재기상 → 정상/주의/경보 |

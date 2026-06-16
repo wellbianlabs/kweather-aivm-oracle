@@ -67,9 +67,14 @@ The oracle's weather is turned into actionable, domain-specific decisions by a c
 | `event-hedge` | Insurance/Events | rain/wind → CONFIRM / HEDGE / POSTPONE-PAYOUT |
 | `tourism-comfort` | Travel | comfort score → dynamic pricing |
 | `wildfire-risk` | Insurance/Safety | fire weather → LOW / ELEVATED / RED_FLAG |
+| `heat-stress` | HSE/Health | felt temp(체감) → STOP / LIMIT / cold guard |
+| `storm-pressure` | Insurance/Marine | pressure(기압)+wind → STORM / WATCH / STABLE |
+| `visibility-ops` | Transport | visibility(가시거리) → HALT / CAUTION / GO |
+| `snow-ops` | Logistics/Public | snowfall(적설) → DEPLOY / PREP / CLEAR |
 
-All decision inputs are limited to K-Weather world fields (temperature, humidity, wind,
-precipitation) — products that needed PM/solar/UV were removed.
+All inputs come from the K-Weather world feed: temperature, senseTemp(체감), humidity,
+precipitation, wind speed/direction, pressure(기압), visibility(가시거리), snowfall(적설),
+discomfort index. (No PM/solar/UV — not part of the K-Weather world feed.)
 
 The autonomous agent (`GET /api/agent?product=<id>`) pays on-chain (subscribe + metered
 `queryLatest`) and returns the chosen product's decision. MCP tools: `list_decision_products()`,

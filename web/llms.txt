@@ -10,8 +10,9 @@ On-chain dApp: https://kweather-aivm-oracle-wellbianlabs.vercel.app/dapp
 Source: https://github.com/wellbianlabs/kweather-aivm-oracle
 
 ## What you can buy
-- 4,255 world cities (GeoNames id = on-chain region code). Fields: temperature, humidity,
-  precipitation, wind speed, wind direction, discomfort index.
+- 4,255 world cities (GeoNames id = on-chain region code). Fields: temperature, senseTemp(체감),
+  humidity, precipitation, wind speed, wind direction, pressure(기압), visibility(가시거리),
+  snowfall(적설), discomfort index.
 - Data source: K-Weather 세계날씨 only (world realtime kw-world-r1 + hourly forecast kw-world-3d1).
   Coverage = cities served by K-Weather's world feed. (Korea is served via a separate channel.)
 
@@ -47,11 +48,12 @@ Set env AGENT_PRIVATE_KEY (a funded testnet wallet) to enable the purchase tools
 - GET /api/quote — pricing, contracts, settlement token
 - GET /api/weather?code=<id> — free real-time K-Weather preview (JSON: current + hourly series)
 - POST/GET /api/relay?id=&lat=&lon= — publish a city on-chain (relayer)
-- GET /api/decision — on-chain weather DECISION PRODUCTS catalog (9 products). Add ?city=<name|id>
+- GET /api/decision — on-chain weather DECISION PRODUCTS catalog (13 products). Add ?city=<name|id>
   to run all, or &product=<id> for one. Decides from on-chain oracle data; returns signal/action/
   score/rationale per product. Products: wind-dispatch, crop-irrigation, flood-watch,
   heat-demand-response, cold-chain, construction-safety, event-hedge, tourism-comfort,
-  wildfire-risk. (Feed consumption settles via metered queryLatest or x402.)
+  wildfire-risk, heat-stress, storm-pressure, visibility-ops, snow-ops.
+  (Feed consumption settles via metered queryLatest or x402.)
 - Metered purchase + query happens via the smart contracts (see /openapi.json and /api/quote).
 
 ### Option C — x402 (HTTP 402, KEYLESS pay-per-call) — MULTI-ASSET

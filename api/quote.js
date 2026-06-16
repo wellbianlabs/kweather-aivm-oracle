@@ -17,7 +17,7 @@ module.exports = async (req, res) => {
     const f = (w) => Number(ethers.formatUnits(w, 18));
     return res.status(200).json({
       product: "K-Weather × AIVM on-chain weather oracle",
-      coverage: "4,255 world cities, K-Weather 세계날씨 real-time (temperature, humidity, precipitation, wind speed/direction, discomfort index)",
+      coverage: "4,255 world cities, K-Weather 세계날씨 real-time (temperature, senseTemp, humidity, precipitation, wind speed/direction, pressure, visibility, snowfall, discomfort index)",
       chain: { name: "BNB Smart Chain Testnet", chainId: 97, explorer: "https://testnet.bscscan.com" },
       settlementToken: { symbol: "KWT", address: TOKEN_ADDRESS, note: "testnet ERC-20; gas paid in tBNB" },
       pricing: {
