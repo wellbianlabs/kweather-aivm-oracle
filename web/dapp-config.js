@@ -9,6 +9,8 @@ window.DAPP_CONFIG = {
   "token": "0x04090599Dbaa990eabC37fFBDE223A4eD02e5b20",
   "subscriptionManager": "0xA34D6B699f16ed574A574a3E2b18ce063da4d911",
   "oracle": "0x2A2b4B6530ef062c80fCeEc23ae0d6167eAe9630",
+  "koreaOracle": "0xb303D062e079365479513a951777a35a353b32de",
+  "koreaSubscriptionManager": "0x17AE51B67daFcC4845A60918F541DEBBBD73feA7",
   "agent": "0x7654dbB95565eb569e4a2aEBa822402338aaB67E",
   "pricing": {
     "monthlyPrice": "100000000000000000000",

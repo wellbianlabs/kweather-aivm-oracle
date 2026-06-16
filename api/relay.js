@@ -26,6 +26,11 @@ const FEATURED = [
 const ORACLE_ABI = [
   "function pushBatch(uint256[] regionCodes, (uint256,int256,int256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)[] data) external",
 ];
+const KOREA_ABI = [
+  "function pushBatch(uint256[] regionCodes, (uint256,int256,int256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)[] data) external",
+];
+const { scaleObs: krScaleObs } = require("../lib/korea-scale");
+const KOREA_ORACLE = process.env.KOREA_ORACLE_ADDRESS || "0xb303D062e079365479513a951777a35a353b32de";
 
 let _last = 0; // simple throttle across warm invocations
 
@@ -46,24 +51,30 @@ module.exports = async (req, res) => {
       return res.status(429).json({ error: "throttled — try again in a minute" });
     }
 
+    // a 10-digit single id is a Korea 법정동 -> domestic feed + Korea oracle
+    const isKR = single && /^\d{10}$/.test(String(qid));
+    const scaler = isKR ? krScaleObs : scaleObs;
+
     const base = process.env.SELF_URL || `https://${req.headers.host}`;
     const codes = [];
     const tuples = [];
     for (const rg of targets) {
-      const wc = rg.wc ? `&worldcode=${rg.wc}` : "";
-      const r = await fetch(`${base}/api/weather?lat=${rg.lat}&lon=${rg.lon}&code=${rg.code}${wc}`);
+      const url = isKR
+        ? `${base}/api/weather?code=${rg.code}`
+        : `${base}/api/weather?lat=${rg.lat}&lon=${rg.lon}&code=${rg.code}${rg.wc ? `&worldcode=${rg.wc}` : ""}`;
+      const r = await fetch(url);
       if (!r.ok) continue;
       const j = await r.json();
       const o = j.current || (j.series && j.series[j.series.length - 1]);
       if (!o) continue;
       codes.push(rg.code);
-      tuples.push(scaleObs(o));
+      tuples.push(scaler(o));
     }
     if (!codes.length) return res.status(502).json({ error: "no weather data to relay" });
 
     const provider = new ethers.JsonRpcProvider(RPC_URL || "https://bsc-testnet-rpc.publicnode.com");
     const wallet = new ethers.Wallet(RELAYER_PRIVATE_KEY, provider);
-    const oracle = new ethers.Contract(ORACLE_ADDRESS, ORACLE_ABI, wallet);
+    const oracle = new ethers.Contract(isKR ? KOREA_ORACLE : ORACLE_ADDRESS, isKR ? KOREA_ABI : ORACLE_ABI, wallet);
 
     const tx = await oracle.pushBatch(codes, tuples);
     _last = now;

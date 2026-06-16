@@ -1,81 +1,96 @@
-/* KWeather × AIVM on-chain dApp (BNB Smart Chain Testnet). Requires ethers UMD + dapp-config.js + abi.js. */
+/* KWeather × AIVM on-chain dApp (BNB Smart Chain Testnet). Requires ethers UMD + dapp-config.js + abi.js.
+   Two markets: 세계(World) oracle (GeoNames id) and 국내 동단위(Korea) oracle (10-digit 법정동코드).
+   The selected region's code length routes contracts to the right oracle + SubscriptionManager. */
 "use strict";
 
 const CFG = window.DAPP_CONFIG;
-const CITIES = (window.CITIES || []).map(([id, name, cc, lat, lon]) => ({ id, name, cc, lat, lon }));
+const WORLD = (window.CITIES || []).map(([id, name, cc, lat, lon]) => ({ id, name, cc, lat, lon }));
+const KOREA = (window.KOREA_CITIES || []).map(([id, name, cc, lat, lon]) => ({ id, name, cc, lat, lon }));
+const CITIES = [...WORLD, ...KOREA];
 const CITY_BY_ID = new Map(CITIES.map((c) => [c.id, c]));
 const FEATURED = (window.FEATURED || []).map((f) => ({ id: f.id, name: f.name, cc: f.country, lat: f.lat, lon: f.lon }));
-// Korea is not part of this marketplace — hide any Korea-related on-chain regions from the UI.
-// (They remain on-chain since the oracle has no delete; we just don't display them.)
-const KOREA_REGIONS = new Set([1835848]); // GeoNames Seoul (delisted from the catalog)
-const isKoreaRegion = (code) => KOREA_REGIONS.has(Number(code)) || String(code).length === 10; // 10-digit = Korean 법정동 code
+
+const isDong = (code) => String(code).length === 10; // 10-digit = 법정동(국내)
 function cityName(code) {
   const c = CITY_BY_ID.get(Number(code));
-  if (c) return `${c.name}, ${c.cc}`;
+  if (c) return isDong(c.id) ? `${c.name} (KR)` : `${c.name}, ${c.cc}`;
   return `region #${code}`;
 }
 
 let provider, signer, account;
-let token, sm, oracle; // signer-connected
-let roToken, roSm, roOracle; // read-only
+let roToken, token; // KWT token shared across both markets
+let roWorldOracle;   // for the 세계 status panel
 
 const $ = (id) => document.getElementById(id);
 const fmt = (wei) => Number(ethers.formatUnits(wei, 18)).toLocaleString(undefined, { maximumFractionDigits: 2 });
 const short = (a) => a.slice(0, 6) + "…" + a.slice(-4);
 const txLink = (h) => `${CFG.explorer}/tx/${h}`;
 const addrLink = (a) => `${CFG.explorer}/address/${a}`;
+const curCode = () => Number($("regionSel").value);
+
+// route contracts to the right market for a given region code
+function ctx(code) {
+  const kr = isDong(code);
+  return {
+    kr,
+    oracleAddr: kr ? CFG.koreaOracle : CFG.oracle,
+    smAddr: kr ? CFG.koreaSubscriptionManager : CFG.subscriptionManager,
+    oabi: kr ? window.ABI.oracleKorea : window.ABI.oracle,
+    unscale: kr ? unscaleKorea : unscale,
+  };
+}
+const roOracleOf = (code) => new ethers.Contract(ctx(code).oracleAddr, ctx(code).oabi, provider);
+const oracleSignerOf = (code) => new ethers.Contract(ctx(code).oracleAddr, ctx(code).oabi, signer);
+const roSmOf = (code) => new ethers.Contract(ctx(code).smAddr, window.ABI.sm, provider);
+const smSignerOf = (code) => new ethers.Contract(ctx(code).smAddr, window.ABI.sm, signer);
 
 function unscale(d) {
   return {
-    timestamp: Number(d.timestamp),
-    temperature: Number(d.temperature) / 100,
-    senseTemp: Number(d.senseTemp) / 100,
-    humidity: Number(d.humidity),
-    precipitation: Number(d.precipitation) / 100,
-    windSpeed: Number(d.windSpeed) / 100,
-    windDirection: Number(d.windDirection),
-    pressure: Number(d.pressure) / 100,
-    visibility: Number(d.visibility),
-    snowfall: Number(d.snowfall) / 100,
+    timestamp: Number(d.timestamp), temperature: Number(d.temperature) / 100, senseTemp: Number(d.senseTemp) / 100,
+    humidity: Number(d.humidity), precipitation: Number(d.precipitation) / 100, windSpeed: Number(d.windSpeed) / 100,
+    windDirection: Number(d.windDirection), pressure: Number(d.pressure) / 100, visibility: Number(d.visibility),
+    snowfall: Number(d.snowfall) / 100, discomfortIndex: Number(d.discomfortIndex) / 10,
+  };
+}
+function unscaleKorea(d) {
+  return {
+    timestamp: Number(d.timestamp), temperature: Number(d.temperature) / 100, senseTemp: Number(d.senseTemp) / 100,
+    humidity: Number(d.humidity), precipitation: Number(d.precipitation) / 100, windSpeed: Number(d.windSpeed) / 100,
+    windDirection: Number(d.windDirection), pm10: Number(d.pm10) / 10, pm25: Number(d.pm25) / 10,
     discomfortIndex: Number(d.discomfortIndex) / 10,
   };
 }
 
 function notDeployed() {
-  $("statusBody").innerHTML = `<span class="warn">아직 온체인에 배포되지 않았습니다.</span> 곧 컨트랙트 주소가 채워집니다.`;
+  $("statusBody").innerHTML = `<span class="warn">아직 온체인에 배포되지 않았습니다.</span>`;
 }
 
 function initReadOnly() {
   provider = new ethers.JsonRpcProvider(CFG.rpc);
   roToken = new ethers.Contract(CFG.token, window.ABI.token, provider);
-  roSm = new ethers.Contract(CFG.subscriptionManager, window.ABI.sm, provider);
-  roOracle = new ethers.Contract(CFG.oracle, window.ABI.oracle, provider);
+  roWorldOracle = new ethers.Contract(CFG.oracle, window.ABI.oracle, provider);
   $("oracleLink").href = addrLink(CFG.oracle);
   $("explorerFoot").href = CFG.explorer;
 }
 
 async function refreshStatus() {
   try {
-    const regions = (await roOracle.getRegions()).filter((code) => !isKoreaRegion(code));
+    const regions = await roWorldOracle.getRegions();
     const rows = await Promise.all(
-      regions.map(async (code) => {
-        const cnt = await roOracle.observationCount(code);
+      regions.slice(0, 60).map(async (code) => {
+        const cnt = await roWorldOracle.observationCount(code);
         let temp = "—", ts = 0;
-        if (cnt > 0n) {
-          const d = unscale(await roOracle.peekLatest(code));
-          temp = d.temperature.toFixed(1) + "℃";
-          ts = d.timestamp;
-        }
-        const name = cityName(code);
+        if (cnt > 0n) { const d = unscale(await roWorldOracle.peekLatest(code)); temp = d.temperature.toFixed(1) + "℃"; ts = d.timestamp; }
         const when = ts ? new Date(ts * 1000).toLocaleString("ko-KR", { hour: "2-digit", minute: "2-digit", month: "numeric", day: "numeric" }) : "데이터 없음";
-        return `<div class="kv"><span class="k">${name} <span class="addr">#${cnt}</span></span><span class="v">${temp} <span class="addr">${when}</span></span></div>`;
+        return `<div class="kv"><span class="k">${cityName(code)} <span class="addr">#${cnt}</span></span><span class="v">${temp} <span class="addr">${when}</span></span></div>`;
       })
     );
     $("statusBody").innerHTML =
-      `<div class="kv"><span class="k">오라클</span><span class="v"><a class="ext" href="${addrLink(CFG.oracle)}" target="_blank">${short(CFG.oracle)} ↗</a></span></div>` +
+      `<div class="kv"><span class="k">세계 오라클</span><span class="v"><a class="ext" href="${addrLink(CFG.oracle)}" target="_blank">${short(CFG.oracle)} ↗</a></span></div>` +
+      `<div class="kv"><span class="k">국내 동단위 오라클</span><span class="v"><a class="ext" href="${addrLink(CFG.koreaOracle)}" target="_blank">${short(CFG.koreaOracle)} ↗</a></span></div>` +
       `<div class="kv"><span class="k">KWT 토큰</span><span class="v"><a class="ext" href="${addrLink(CFG.token)}" target="_blank">${short(CFG.token)} ↗</a></span></div>` +
-      `<div class="kv"><span class="k">구독 매니저</span><span class="v"><a class="ext" href="${addrLink(CFG.subscriptionManager)}" target="_blank">${short(CFG.subscriptionManager)} ↗</a></span></div>` +
       `<hr style="border-color:var(--line);margin:10px 0">` +
+      `<div class="hint" style="margin-bottom:6px">세계 오라클 최신 ${regions.length}개 지역 (국내 동은 검색→조회)</div>` +
       (rows.length ? rows.join("") : `<div class="kv"><span class="k">온체인 데이터</span><span class="v warn">릴레이어 대기 중</span></div>`);
   } catch (e) {
     $("statusBody").innerHTML = `<span class="bad">상태 조회 실패:</span> ${e.message}`;
@@ -86,23 +101,17 @@ async function connect() {
   if (!window.ethereum) { alert("MetaMask 등 EVM 지갑이 필요합니다."); return; }
   const bp = new ethers.BrowserProvider(window.ethereum);
   await bp.send("eth_requestAccounts", []);
-  // ensure the configured network (BNB Smart Chain Testnet)
   try {
     await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: CFG.chainHex }] });
   } catch (e) {
     if (e.code === 4902) {
       const sym = CFG.currency || "ETH";
-      await window.ethereum.request({
-        method: "wallet_addEthereumChain",
-        params: [{ chainId: CFG.chainHex, chainName: CFG.chainName, nativeCurrency: { name: sym, symbol: sym, decimals: 18 }, rpcUrls: [CFG.rpc], blockExplorerUrls: [CFG.explorer] }],
-      });
+      await window.ethereum.request({ method: "wallet_addEthereumChain", params: [{ chainId: CFG.chainHex, chainName: CFG.chainName, nativeCurrency: { name: sym, symbol: sym, decimals: 18 }, rpcUrls: [CFG.rpc], blockExplorerUrls: [CFG.explorer] }] });
     }
   }
   signer = await bp.getSigner();
   account = await signer.getAddress();
   token = new ethers.Contract(CFG.token, window.ABI.token, signer);
-  sm = new ethers.Contract(CFG.subscriptionManager, window.ABI.sm, signer);
-  oracle = new ethers.Contract(CFG.oracle, window.ABI.oracle, signer);
   $("connectBtn").textContent = short(account);
   ["faucetBtn", "subBtn", "prepayBtn", "queryBtn"].forEach((id) => ($(id).disabled = false));
   await refreshWallet();
@@ -110,98 +119,96 @@ async function connect() {
 
 async function refreshWallet() {
   if (!account) return;
+  const code = curCode();
+  const roSm = roSmOf(code);
   const [eth, kwt, sub, prepaid] = await Promise.all([
-    provider.getBalance(account),
-    roToken.balanceOf(account),
-    roSm.quotaOf(account),
-    roSm.prepaidBalance(account),
+    provider.getBalance(account), roToken.balanceOf(account), roSm.quotaOf(account), roSm.prepaidBalance(account),
   ]);
   $("walletBody").innerHTML =
     `<div class="kv"><span class="k">주소</span><span class="v"><a class="ext" href="${addrLink(account)}" target="_blank">${short(account)} ↗</a></span></div>` +
     `<div class="kv"><span class="k">${CFG.currency || "ETH"} (가스)</span><span class="v">${Number(ethers.formatEther(eth)).toFixed(4)}</span></div>` +
     `<div class="kv"><span class="k">KWT 잔액</span><span class="v">${fmt(kwt)}</span></div>`;
   const active = BigInt(sub[0]) > BigInt(Math.floor(Date.now() / 1000)) && BigInt(sub[1]) > 0n;
+  const market = ctx(code).kr ? "국내 동단위" : "세계";
   $("accessBody").innerHTML =
+    `<div class="kv"><span class="k">구독 시장</span><span class="v">${market}</span></div>` +
     `<div class="kv"><span class="k">구독 상태</span><span class="v ${active ? "ok" : "warn"}">${active ? "활성" : "없음"}</span></div>` +
     `<div class="kv"><span class="k">남은 쿼리 한도</span><span class="v">${sub[1]}</span></div>` +
     `<div class="kv"><span class="k">종량제 선불 잔액</span><span class="v">${fmt(prepaid)} KWT</span></div>`;
 }
 
 async function withBusy(btn, label, fn) {
-  const old = btn.textContent;
-  btn.disabled = true; btn.textContent = label;
+  const old = btn.textContent; btn.disabled = true; btn.textContent = label;
   try { await fn(); } catch (e) { alert((e && (e.shortMessage || e.message)) || e); }
   btn.disabled = false; btn.textContent = old;
 }
 
 async function faucet() {
-  await withBusy($("faucetBtn"), "민팅 중…", async () => {
-    await (await token.mint(account, ethers.parseUnits("1000", 18))).wait();
-    await refreshWallet();
-  });
+  await withBusy($("faucetBtn"), "민팅 중…", async () => { await (await token.mint(account, ethers.parseUnits("1000", 18))).wait(); await refreshWallet(); });
 }
 
 async function subscribe() {
   await withBusy($("subBtn"), "구독 처리 중…", async () => {
+    const code = curCode(); const smAddr = ctx(code).smAddr; const sm = smSignerOf(code); const roSm = roSmOf(code);
     const price = await roSm.monthlyPrice();
-    const allowance = await roToken.allowance(account, CFG.subscriptionManager);
-    if (allowance < price) await (await token.approve(CFG.subscriptionManager, price)).wait();
-    await (await sm.subscribe(1)).wait();
-    await refreshWallet();
+    if ((await roToken.allowance(account, smAddr)) < price) await (await token.approve(smAddr, price)).wait();
+    await (await sm.subscribe(1)).wait(); await refreshWallet();
   });
 }
 
 async function prepay() {
   await withBusy($("prepayBtn"), "예치 중…", async () => {
+    const code = curCode(); const smAddr = ctx(code).smAddr; const sm = smSignerOf(code);
     const amt = ethers.parseUnits("10", 18);
-    const allowance = await roToken.allowance(account, CFG.subscriptionManager);
-    if (allowance < amt) await (await token.approve(CFG.subscriptionManager, amt)).wait();
-    await (await sm.depositPrepaid(amt)).wait();
-    await refreshWallet();
+    if ((await roToken.allowance(account, smAddr)) < amt) await (await token.approve(smAddr, amt)).wait();
+    await (await sm.depositPrepaid(amt)).wait(); await refreshWallet();
   });
 }
 
 function renderWeather(code, d, extra) {
-  const name = cityName(code);
-  return (
-    `[${name}] @ ${new Date(d.timestamp * 1000).toLocaleString("ko-KR")}\n` +
+  const head = `[${cityName(code)}] @ ${new Date(d.timestamp * 1000).toLocaleString("ko-KR")}\n` +
     `기온 ${d.temperature.toFixed(1)}℃ (체감 ${d.senseTemp.toFixed(1)}℃) · 습도 ${d.humidity}%\n` +
-    `풍속 ${d.windSpeed}m/s · 풍향 ${d.windDirection}° · 강수 ${d.precipitation}mm\n` +
-    `기압 ${d.pressure}hPa · 가시거리 ${d.visibility}m · 적설 ${d.snowfall}cm · 불쾌지수 ${d.discomfortIndex}\n` +
-    (extra || "")
-  );
+    `풍속 ${d.windSpeed}m/s · 풍향 ${d.windDirection}° · 강수 ${d.precipitation}mm\n`;
+  const extraLine = isDong(code)
+    ? `미세먼지 PM10 ${d.pm10} · PM2.5 ${d.pm25} · 불쾌지수 ${d.discomfortIndex}\n`
+    : `기압 ${d.pressure}hPa · 가시거리 ${d.visibility}m · 적설 ${d.snowfall}cm · 불쾌지수 ${d.discomfortIndex}\n`;
+  return head + extraLine + (extra || "");
 }
 
 async function query() {
-  const code = Number($("regionSel").value);
+  const code = curCode();
   await withBusy($("queryBtn"), "처리 중…", async () => {
-    // publish on-demand if this city has no on-chain data yet
+    const roOracle = roOracleOf(code), oracle = oracleSignerOf(code);
     const cnt = await roOracle.observationCount(code);
     if (cnt === 0n) {
       const c = CITY_BY_ID.get(code);
-      if (!c) throw new Error("카탈로그에 없는 도시라 발행할 수 없습니다.");
+      if (!c) throw new Error("카탈로그에 없는 지역이라 발행할 수 없습니다.");
       $("queryResult").textContent = `온체인에 없음 → 릴레이어가 ${c.name} 발행 중…`;
       const rj = await (await fetch(`/api/relay?id=${code}&lat=${c.lat}&lon=${c.lon}`)).json();
       if (rj.error) throw new Error("발행 실패: " + rj.error);
     }
-    const data = unscale(await oracle.queryLatest.staticCall(code)); // decoded result
-    const tx = await oracle.queryLatest(code); // metered tx (consume quota / pay)
+    const data = ctx(code).unscale(await oracle.queryLatest.staticCall(code));
+    const tx = await oracle.queryLatest(code);
     $("queryResult").textContent = renderWeather(code, data, `tx 전송됨: ${tx.hash}\n확정 대기 중…`);
     const receipt = await tx.wait();
-    $("queryResult").innerHTML =
-      renderWeather(code, data).replace(/\n/g, "<br>") +
+    $("queryResult").innerHTML = renderWeather(code, data).replace(/\n/g, "<br>") +
       `<br><span class="ok">✓ 결제·조회 완료</span> · <a class="ext" href="${txLink(tx.hash)}" target="_blank">tx ↗</a> (block ${receipt.blockNumber})`;
-    await refreshWallet();
-    refreshStatus();
+    await refreshWallet(); refreshStatus();
   });
 }
 
 async function peek() {
-  const code = $("regionSel").value;
+  const code = curCode();
   await withBusy($("peekBtn"), "조회 중…", async () => {
+    const roOracle = roOracleOf(code);
     const cnt = await roOracle.observationCount(code);
-    if (cnt === 0n) { $("queryResult").textContent = "이 지역은 아직 온체인 데이터가 없습니다 (릴레이어 대기)."; return; }
-    const data = unscale(await roOracle.peekLatest(code));
+    if (cnt === 0n) {
+      // domestic 동 not yet on-chain → publish on demand then peek
+      const c = CITY_BY_ID.get(code);
+      if (isDong(code) && c) { const rj = await (await fetch(`/api/relay?id=${code}&lat=${c.lat}&lon=${c.lon}`)).json(); if (rj.error) { $("queryResult").textContent = "데이터 없음: " + rj.error; return; } }
+      else { $("queryResult").textContent = "이 지역은 아직 온체인 데이터가 없습니다 (릴레이어 대기)."; return; }
+    }
+    const data = ctx(code).unscale(await roOracle.peekLatest(code));
     $("queryResult").innerHTML = renderWeather(code, data, "(무료 미리보기 — 결제·미터링 없음)").replace(/\n/g, "<br>");
   });
 }
@@ -209,42 +216,33 @@ async function peek() {
 async function runAgent() {
   await withBusy($("agentBtn"), "에이전트 실행 중…", async () => {
     $("agentResult").textContent = "에이전트 봇이 구독·결제 후 온체인 쿼리를 실행 중…";
-    const r = await fetch("/api/agent");
-    const j = await r.json();
+    const j = await (await fetch("/api/agent")).json();
     if (j.error) { $("agentResult").textContent = "에러: " + j.error; return; }
     const dd = j.decisionDetail || {};
-    let html =
-      `🤖 에이전트 ${short(j.agent)} (${j.region})\n` +
-      `상품: ${dd.emoji || ""} ${dd.name || j.product} · 표본 ${j.samples}h\n` +
-      `→ 신호 ${dd.signal || "-"} (${Math.round((dd.score || 0) * 100)}%) · ${j.decision}\n` +
-      `${dd.rationale || ""}\n` +
-      `남은 구독 한도: ${j.quotaRemaining}`;
+    let html = `🤖 에이전트 ${short(j.agent)} (${j.region})\n상품: ${dd.emoji || ""} ${dd.name || j.product} · 표본 ${j.samples}h\n→ 신호 ${dd.signal || "-"} (${Math.round((dd.score || 0) * 100)}%) · ${j.decision}\n${dd.rationale || ""}\n남은 구독 한도: ${j.quotaRemaining}`;
     html = html.replace(/\n/g, "<br>");
     if (j.paidThisRun) html += `<br><span class="ok">결제: 구독 1개월</span> · <a class="ext" href="${txLink(j.paidThisRun.txHash)}" target="_blank">tx ↗</a>`;
     if (j.queryTxHash) html += `<br><span class="ok">온체인 쿼리</span> · <a class="ext" href="${txLink(j.queryTxHash)}" target="_blank">tx ↗</a>`;
-    $("agentResult").innerHTML = html;
-    refreshStatus();
+    $("agentResult").innerHTML = html; refreshStatus();
   });
 }
 
 async function relayNow() {
   await withBusy($("relayBtn"), "릴레이 중…", async () => {
     $("agentResult").textContent = "릴레이어가 실제 날씨를 온체인에 발행 중…";
-    const r = await fetch("/api/relay");
-    const j = await r.json();
+    const j = await (await fetch("/api/relay")).json();
     if (j.error) { $("agentResult").textContent = "릴레이 에러: " + j.error; return; }
-    $("agentResult").innerHTML =
-      `📡 ${j.regions}개 지역 온체인 발행 완료 · <a class="ext" href="${txLink(j.txHash)}" target="_blank">tx ↗</a> (block ${j.block}, gas ${j.gasUsed})`;
+    $("agentResult").innerHTML = `📡 ${j.regions}개 지역 온체인 발행 완료 · <a class="ext" href="${txLink(j.txHash)}" target="_blank">tx ↗</a> (block ${j.block})`;
     refreshStatus();
   });
 }
 
 function selectCityOption(c) {
   const sel = $("regionSel");
-  if (!Array.from(sel.options).some((o) => Number(o.value) === c.id)) {
-    sel.add(new Option(`${c.name}, ${c.cc}`, String(c.id)));
-  }
+  const label = isDong(c.id) ? `${c.name} (KR 동)` : `${c.name}, ${c.cc}`;
+  if (!Array.from(sel.options).some((o) => Number(o.value) === c.id)) sel.add(new Option(label, String(c.id)));
   sel.value = String(c.id);
+  if (account) refreshWallet();
 }
 function wireDappSearch() {
   const box = $("citySearch2"), list = $("searchResults2");
@@ -254,25 +252,18 @@ function wireDappSearch() {
     if (!q) { list.style.display = "none"; return; }
     const hits = [];
     for (const c of CITIES) {
-      if (c.name.toLowerCase().startsWith(q) || `${c.name}, ${c.cc}`.toLowerCase().includes(q)) { hits.push(c); if (hits.length >= 10) break; }
+      if (c.name.toLowerCase().startsWith(q) || `${c.name}, ${c.cc}`.toLowerCase().includes(q)) { hits.push(c); if (hits.length >= 12) break; }
     }
-    list.innerHTML = hits.map((c) => `<div class="sres" data-id="${c.id}">${c.name} <span class="cc">${c.cc}</span></div>`).join("");
+    list.innerHTML = hits.map((c) => `<div class="sres" data-id="${c.id}">${c.name} <span class="cc">${isDong(c.id) ? "KR 동" : c.cc}</span></div>`).join("");
     list.style.display = hits.length ? "block" : "none";
-    list.querySelectorAll(".sres").forEach((el) => el.addEventListener("click", () => {
-      selectCityOption(CITY_BY_ID.get(Number(el.dataset.id)));
-      box.value = ""; list.style.display = "none";
-    }));
+    list.querySelectorAll(".sres").forEach((el) => el.addEventListener("click", () => { selectCityOption(CITY_BY_ID.get(Number(el.dataset.id))); box.value = ""; list.style.display = "none"; }));
   };
   box.addEventListener("input", () => render(box.value));
   box.addEventListener("blur", () => setTimeout(() => (list.style.display = "none"), 200));
 }
 
 async function loadDecisionProducts() {
-  try {
-    const j = await (await fetch("/api/decision")).json();
-    const sel = $("decProduct");
-    if (sel) (j.products || []).forEach((p) => sel.add(new Option(`${p.emoji} ${p.name}`, p.id)));
-  } catch { /* non-fatal */ }
+  try { const j = await (await fetch("/api/decision")).json(); const sel = $("decProduct"); if (sel) (j.products || []).forEach((p) => sel.add(new Option(`${p.emoji} ${p.name}`, p.id))); } catch { /* non-fatal */ }
 }
 async function runDecision() {
   const city = ($("decCity").value || "Jakarta").trim();
@@ -283,10 +274,9 @@ async function runDecision() {
     if (j.error) { $("decResult").textContent = "에러: " + j.error; return; }
     const src = j.onchain ? `⛓️ 온체인 #${j.regionCode}` : `${j.source} (폴백)`;
     const o = j.observation || {};
-    const head = `📍 ${j.city} · ${src} · ${j.samples}개 표본\n기온 ${o.temperature}℃ · 습도 ${o.humidity}% · PM2.5 ${o.pm25} · UV ${o.uvIndex}\n`;
-    const body = (j.decisions || []).map((d) =>
-      `${d.emoji} ${d.name} [${d.sector}]\n   → ${d.signal} (${Math.round(d.score * 100)}%) · ${d.action}\n   ${d.rationale}`
-    ).join("\n\n");
+    const air = o.pm25 != null ? ` · PM2.5 ${o.pm25}` : "";
+    const head = `📍 ${j.city} · ${src} · ${j.samples}개 표본\n기온 ${o.temperature}℃ · 습도 ${o.humidity}%${air}\n`;
+    const body = (j.decisions || []).map((d) => `${d.emoji} ${d.name} [${d.sector}]\n   → ${d.signal} (${Math.round(d.score * 100)}%) · ${d.action}\n   ${d.rationale}`).join("\n\n");
     $("decResult").innerHTML = (head + "\n" + body).replace(/\n/g, "<br>");
   });
 }
@@ -308,6 +298,7 @@ function main() {
   $("prepayBtn").addEventListener("click", prepay);
   $("queryBtn").addEventListener("click", query);
   $("peekBtn").addEventListener("click", peek);
+  $("regionSel").addEventListener("change", () => { if (account) refreshWallet(); });
   $("agentBtn").addEventListener("click", runAgent);
   $("relayBtn").addEventListener("click", relayNow);
   refreshStatus();
