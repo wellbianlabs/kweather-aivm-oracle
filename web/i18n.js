@@ -5,8 +5,13 @@
    A single #langBtn toggles; the choice is persisted to localStorage. */
 (function () {
   const KEY = "kw_lang";
+  // shared helper for JS-rendered (dynamic) strings: KW.t(ko, en); KW.onLang(fn) re-renders on toggle.
+  window.KW = window.KW || { lang: "ko", _cbs: [] };
+  window.KW.t = (ko, en) => (window.KW.lang === "en" ? en : ko);
+  window.KW.onLang = (fn) => { window.KW._cbs.push(fn); };
   function apply(lang) {
     document.documentElement.lang = lang;
+    window.KW.lang = lang;
     document.querySelectorAll("[data-en]").forEach((el) => {
       if (el.dataset.ko === undefined) el.dataset.ko = el.textContent;
       el.textContent = lang === "en" ? el.dataset.en : el.dataset.ko;
@@ -22,6 +27,7 @@
     const btn = document.getElementById("langBtn");
     if (btn) btn.textContent = lang === "en" ? "한국어" : "EN";
     try { localStorage.setItem(KEY, lang); } catch (e) { /* ignore */ }
+    (window.KW._cbs || []).forEach((fn) => { try { fn(lang); } catch (e) { /* ignore */ } });
   }
   function init() {
     let lang = "ko";
