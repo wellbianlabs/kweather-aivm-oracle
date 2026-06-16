@@ -52,7 +52,8 @@ function loadCities() {
   const txt = readFileSync(join(__dirname, "..", "web", "cities.js"), "utf8");
   const start = txt.indexOf("[", txt.indexOf("window.CITIES"));
   const arr = JSON.parse(txt.slice(start, txt.lastIndexOf("]") + 1));
-  return arr.map(([id, name, cc, lat, lon]) => ({ id, name, cc, lat, lon }));
+  const kr = JSON.parse(readFileSync(join(__dirname, "..", "lib", "korea-cities.json"), "utf8")); // 법정동(읍면동)
+  return [...arr, ...kr].map(([id, name, cc, lat, lon]) => ({ id, name, cc, lat, lon }));
 }
 const CITIES = loadCities();
 function findCity(query) {

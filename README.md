@@ -6,7 +6,8 @@
 ### 배포된 컨트랙트 (BSC Testnet, chainId 97)
 | 컨트랙트 | 주소 |
 |---|---|
-| KWeatherWorldOracle | [`0x2A2b4B6530ef062c80fCeEc23ae0d6167eAe9630`](https://testnet.bscscan.com/address/0x2A2b4B6530ef062c80fCeEc23ae0d6167eAe9630) |
+| KWeatherWorldOracle (세계) | [`0x2A2b4B6530ef062c80fCeEc23ae0d6167eAe9630`](https://testnet.bscscan.com/address/0x2A2b4B6530ef062c80fCeEc23ae0d6167eAe9630) |
+| KWeatherKoreaOracle (국내 동단위) | [`0xb303D062e079365479513a951777a35a353b32de`](https://testnet.bscscan.com/address/0xb303D062e079365479513a951777a35a353b32de) |
 | SubscriptionManager | [`0xA34D6B699f16ed574A574a3E2b18ce063da4d911`](https://testnet.bscscan.com/address/0xA34D6B699f16ed574A574a3E2b18ce063da4d911) |
 | KWT 토큰 | [`0x04090599Dbaa990eabC37fFBDE223A4eD02e5b20`](https://testnet.bscscan.com/address/0x04090599Dbaa990eabC37fFBDE223A4eD02e5b20) |
 

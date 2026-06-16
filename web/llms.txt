@@ -13,8 +13,10 @@ Source: https://github.com/wellbianlabs/kweather-aivm-oracle
 - 4,255 world cities (GeoNames id = on-chain region code). Fields: temperature, senseTemp(체감),
   humidity, precipitation, wind speed, wind direction, pressure(기압), visibility(가시거리),
   snowfall(적설), discomfort index.
-- Data source: K-Weather 세계날씨 only (world realtime kw-world-r1 + hourly forecast kw-world-3d1).
-  Coverage = cities served by K-Weather's world feed. (Korea is served via a separate channel.)
+- Data source: K-Weather 세계날씨 (world realtime kw-world-r1 + hourly forecast kw-world-3d1).
+- Korea (국내): **3,561 법정동(읍면동)** at 동단위, via K-Weather domestic (kw-odam1 + kw-dust-r1) —
+  includes PM10/PM2.5. A 10-digit 법정동코드 routes to the domestic feed + a dedicated Korea oracle
+  (`0xb303D062…`) with its own SubscriptionManager. Search both via /api/catalog.
 
 ## How settlement works (BNB Smart Chain testnet, chainId 97)
 - Settlement token: KWT (ERC-20). Gas: tBNB.
