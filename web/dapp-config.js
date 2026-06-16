@@ -8,7 +8,7 @@ window.DAPP_CONFIG = {
   "explorer": "https://testnet.bscscan.com",
   "token": "0x04090599Dbaa990eabC37fFBDE223A4eD02e5b20",
   "subscriptionManager": "0xA34D6B699f16ed574A574a3E2b18ce063da4d911",
-  "oracle": "0x62FFc95E32052B7Fdd6E969fc645e3F134Fd2F3C",
+  "oracle": "0x2A2b4B6530ef062c80fCeEc23ae0d6167eAe9630",
   "agent": "0x7654dbB95565eb569e4a2aEBa822402338aaB67E",
   "pricing": {
     "monthlyPrice": "100000000000000000000",

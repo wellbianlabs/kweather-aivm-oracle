@@ -20,10 +20,10 @@ window.ABI = {
     "function queriesPerMonth() view returns (uint256)",
   ],
   oracle: [
-    "function peekLatest(uint256) view returns (tuple(uint256 timestamp,int256 temperature,uint256 humidity,uint256 precipitation,uint256 windSpeed,uint256 windDirection,uint256 pm10,uint256 pm25,uint256 solarRadiation,uint256 uvIndex,uint256 discomfortIndex))",
+    "function peekLatest(uint256) view returns (tuple(uint256 timestamp,int256 temperature,int256 senseTemp,uint256 humidity,uint256 precipitation,uint256 windSpeed,uint256 windDirection,uint256 pressure,uint256 visibility,uint256 snowfall,uint256 discomfortIndex))",
     "function observationCount(uint256) view returns (uint256)",
     "function getRegions() view returns (uint256[])",
-    "function queryLatest(uint256) returns (tuple(uint256 timestamp,int256 temperature,uint256 humidity,uint256 precipitation,uint256 windSpeed,uint256 windDirection,uint256 pm10,uint256 pm25,uint256 solarRadiation,uint256 uvIndex,uint256 discomfortIndex))",
+    "function queryLatest(uint256) returns (tuple(uint256 timestamp,int256 temperature,int256 senseTemp,uint256 humidity,uint256 precipitation,uint256 windSpeed,uint256 windDirection,uint256 pressure,uint256 visibility,uint256 snowfall,uint256 discomfortIndex))",
     "event WeatherQueried(address indexed agent, uint256 indexed regionCode, uint8 mode)",
   ],
 };

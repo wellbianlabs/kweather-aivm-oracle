@@ -6,6 +6,7 @@
 // Env: RPC_URL, RELAYER_PRIVATE_KEY, ORACLE_ADDRESS
 
 const { ethers } = require("ethers");
+const { scaleObs } = require("../lib/world-scale");
 
 // Featured global cities (GeoNames id = on-chain code). `wc` = K-Weather world city code;
 // the /api/weather feed also auto-resolves it from the GeoNames id (lib/worldcodes.json).
@@ -23,7 +24,7 @@ const FEATURED = [
 ];
 
 const ORACLE_ABI = [
-  "function pushBatch(uint256[] regionCodes, (uint256,int256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)[] data) external",
+  "function pushBatch(uint256[] regionCodes, (uint256,int256,int256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)[] data) external",
 ];
 
 let _last = 0; // simple throttle across warm invocations
@@ -56,19 +57,7 @@ module.exports = async (req, res) => {
       const o = j.current || (j.series && j.series[j.series.length - 1]);
       if (!o) continue;
       codes.push(rg.code);
-      tuples.push([
-        BigInt(Math.trunc(o.time)),
-        BigInt(Math.round(o.temperature * 100)),
-        BigInt(Math.round(o.humidity)),
-        BigInt(Math.round(o.precipitation * 100)),
-        BigInt(Math.round(o.windSpeed * 100)),
-        BigInt(Math.round(o.windDirection)),
-        BigInt(Math.round(o.pm10)),
-        BigInt(Math.round(o.pm25)),
-        BigInt(Math.round(o.solarRadiation * 100)),
-        BigInt(Math.round(o.uvIndex * 10)),
-        BigInt(Math.round(o.discomfortIndex * 10)),
-      ]);
+      tuples.push(scaleObs(o));
     }
     if (!codes.length) return res.status(502).json({ error: "no weather data to relay" });
 

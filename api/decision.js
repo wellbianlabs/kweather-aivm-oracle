@@ -12,28 +12,13 @@
 const { ethers } = require("ethers");
 const DP = require("../lib/decision-products");
 const CITIES = require("../lib/cities.json");
+const { unscale, ORACLE_TUPLE } = require("../lib/world-scale");
 
 const ORACLE_ABI = [
   "function observationCount(uint256) view returns (uint256)",
-  "function peekLatest(uint256) view returns (tuple(uint256 timestamp,int256 temperature,uint256 humidity,uint256 precipitation,uint256 windSpeed,uint256 windDirection,uint256 pm10,uint256 pm25,uint256 solarRadiation,uint256 uvIndex,uint256 discomfortIndex))",
-  "function peekHistory(uint256,uint256) view returns (tuple(uint256 timestamp,int256 temperature,uint256 humidity,uint256 precipitation,uint256 windSpeed,uint256 windDirection,uint256 pm10,uint256 pm25,uint256 solarRadiation,uint256 uvIndex,uint256 discomfortIndex)[])",
+  `function peekLatest(uint256) view returns ${ORACLE_TUPLE}`,
+  `function peekHistory(uint256,uint256) view returns ${ORACLE_TUPLE}[]`,
 ];
-
-function unscale(d) {
-  return {
-    timestamp: Number(d.timestamp),
-    temperature: Number(d.temperature) / 100,
-    humidity: Number(d.humidity),
-    precipitation: Number(d.precipitation) / 100,
-    windSpeed: Number(d.windSpeed) / 100,
-    windDirection: Number(d.windDirection),
-    pm10: Number(d.pm10),
-    pm25: Number(d.pm25),
-    solarRadiation: Number(d.solarRadiation) / 100,
-    uvIndex: Number(d.uvIndex) / 10,
-    discomfortIndex: Number(d.discomfortIndex) / 10,
-  };
-}
 
 function resolveCity(req) {
   if (req.query.code && req.query.lat && req.query.lon) {
@@ -72,7 +57,7 @@ module.exports = async (req, res) => {
   try {
     let latest, history, source, block = null;
     const rpc = process.env.RPC_URL || "https://bsc-testnet-rpc.publicnode.com";
-    const oracleAddr = process.env.ORACLE_ADDRESS || "0x62FFc95E32052B7Fdd6E969fc645e3F134Fd2F3C";
+    const oracleAddr = process.env.ORACLE_ADDRESS || "0x2A2b4B6530ef062c80fCeEc23ae0d6167eAe9630";
     const provider = new ethers.JsonRpcProvider(rpc);
     const oracle = new ethers.Contract(oracleAddr, ORACLE_ABI, provider);
 

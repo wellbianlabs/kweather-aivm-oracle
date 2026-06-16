@@ -29,14 +29,14 @@ function unscale(d) {
   return {
     timestamp: Number(d.timestamp),
     temperature: Number(d.temperature) / 100,
+    senseTemp: Number(d.senseTemp) / 100,
     humidity: Number(d.humidity),
     precipitation: Number(d.precipitation) / 100,
     windSpeed: Number(d.windSpeed) / 100,
     windDirection: Number(d.windDirection),
-    pm10: Number(d.pm10),
-    pm25: Number(d.pm25),
-    solarRadiation: Number(d.solarRadiation) / 100,
-    uvIndex: Number(d.uvIndex) / 10,
+    pressure: Number(d.pressure) / 100,
+    visibility: Number(d.visibility),
+    snowfall: Number(d.snowfall) / 100,
     discomfortIndex: Number(d.discomfortIndex) / 10,
   };
 }
@@ -165,9 +165,9 @@ function renderWeather(code, d, extra) {
   const name = cityName(code);
   return (
     `[${name}] @ ${new Date(d.timestamp * 1000).toLocaleString("ko-KR")}\n` +
-    `기온 ${d.temperature.toFixed(1)}℃ · 습도 ${d.humidity}% · 강수 ${d.precipitation}mm\n` +
-    `풍속 ${d.windSpeed}m/s · PM10 ${d.pm10} · PM2.5 ${d.pm25}\n` +
-    `일사량 ${d.solarRadiation}MJ/m² · UV ${d.uvIndex} · 불쾌지수 ${d.discomfortIndex}\n` +
+    `기온 ${d.temperature.toFixed(1)}℃ (체감 ${d.senseTemp.toFixed(1)}℃) · 습도 ${d.humidity}%\n` +
+    `풍속 ${d.windSpeed}m/s · 풍향 ${d.windDirection}° · 강수 ${d.precipitation}mm\n` +
+    `기압 ${d.pressure}hPa · 가시거리 ${d.visibility}m · 적설 ${d.snowfall}cm · 불쾌지수 ${d.discomfortIndex}\n` +
     (extra || "")
   );
 }
@@ -212,12 +212,12 @@ async function runAgent() {
     const r = await fetch("/api/agent");
     const j = await r.json();
     if (j.error) { $("agentResult").textContent = "에러: " + j.error; return; }
-    const f = j.forecast || {};
+    const dd = j.decisionDetail || {};
     let html =
       `🤖 에이전트 ${short(j.agent)} (${j.region})\n` +
-      `표본 ${j.samples}h · 평균 일사량 ${f.avgSolar} MJ/m² · 가동률 ${(f.util * 100).toFixed(0)}%\n` +
-      `예측 발전량 ${f.kwh?.toLocaleString()} kWh/6h\n` +
-      `→ 자율 결정: ${j.decision}\n` +
+      `상품: ${dd.emoji || ""} ${dd.name || j.product} · 표본 ${j.samples}h\n` +
+      `→ 신호 ${dd.signal || "-"} (${Math.round((dd.score || 0) * 100)}%) · ${j.decision}\n` +
+      `${dd.rationale || ""}\n` +
       `남은 구독 한도: ${j.quotaRemaining}`;
     html = html.replace(/\n/g, "<br>");
     if (j.paidThisRun) html += `<br><span class="ok">결제: 구독 1개월</span> · <a class="ext" href="${txLink(j.paidThisRun.txHash)}" target="_blank">tx ↗</a>`;

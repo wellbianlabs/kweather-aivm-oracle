@@ -49,12 +49,11 @@ async function fetchKWeatherWorld(worldCode) {
   let d = j.data.data;
   if (!d && typeof j.data === "object") { const f = Object.values(j.data).find((v) => v && v.data); d = f && f.data; }
   if (!d || (d.temp == null && d.senseTemp == null)) return null;
-  const temperature = num(d.temp, d.senseTemp);
-  const humidity = d.humi != null && d.humi !== "" ? Math.round(num(d.humi)) : 0;
-  return obs(Math.floor(Date.now() / 1000), temperature, humidity, d.rainF, d.ws, d.wd);
+  return obs({ time: Math.floor(Date.now() / 1000), temp: d.temp, senseTemp: d.senseTemp, humi: d.humi, rainF: d.rainF, ws: d.ws, wd: d.wd, pa: d.pa, vs: d.vs, snowF: d.snowF, wIcon: d.wIcon, daylight: d.daylight, cityKo: d.cityKo, cityEn: d.cityEn, countryEn: d.countryEn });
 }
 
 // --- K-Weather world 3-day hourly forecast (kw-world-3d1): builds an hourly series (+0h..) ---
+// Forecast arrays carry temp/humi/wind/precip/snow only (no senseTemp/pressure/visibility).
 async function fetchKWeatherWorldForecast(worldCode) {
   const key = process.env.KWEATHER_API_KEY;
   const r = await fetch(`${KW_BASE}/kw-world-3d1/${encodeURIComponent(worldCode)}?api_key=${encodeURIComponent(key)}`, { signal: AbortSignal.timeout(6000) });
@@ -67,27 +66,36 @@ async function fetchKWeatherWorldForecast(worldCode) {
   const n = Math.min(24, d.date.length);
   const out = [];
   for (let i = 0; i < n; i++) {
-    const t = kstHour(d.date[i], d.nHour && d.nHour[i]);
-    out.push(obs(t, num(d.temp[i]), Math.round(num(d.humi && d.humi[i])), d.rainF && d.rainF[i], d.ws && d.ws[i], d.wd && d.wd[i]));
+    out.push(obs({ time: kstHour(d.date[i], d.nHour && d.nHour[i]), temp: d.temp[i], humi: d.humi && d.humi[i], rainF: d.rainF && d.rainF[i], ws: d.ws && d.ws[i], wd: d.wd && d.wd[i], snowF: d.snowF && d.snowF[i], wIcon: d.wIcon && d.wIcon[i] }));
   }
   return out;
 }
 
-// build a normalized 11-field observation; K-Weather world has no PM/solar/UV -> 0
-function obs(time, temperature, humidity, rainF, ws, wd) {
-  return {
-    time,
+const WICON = { "1": "맑음", "2": "구름조금", "3": "구름많음", "4": "흐림", "5": "비", "6": "비/눈", "7": "눈", "8": "소나기" };
+
+// Build a normalized K-Weather world observation (all fields the world feed provides).
+function obs(x) {
+  const temperature = num(x.temp, x.senseTemp);
+  const humidity = x.humi != null && x.humi !== "" ? Math.round(num(x.humi)) : 0;
+  const o = {
+    time: x.time,
     temperature: r1(temperature),
+    senseTemp: x.senseTemp != null && x.senseTemp !== "" ? r1(num(x.senseTemp)) : r1(temperature),
     humidity,
-    precipitation: rainF != null && rainF !== "" ? r1(num(rainF)) : 0,
-    windSpeed: r1(num(ws)),
-    windDirection: compassToDeg(wd) || 0,
-    pm10: 0,
-    pm25: 0,
-    solarRadiation: 0,
-    uvIndex: 0,
+    precipitation: x.rainF != null && x.rainF !== "" ? r1(num(x.rainF)) : 0,
+    windSpeed: r1(num(x.ws)),
+    windDirection: compassToDeg(x.wd) || 0,
+    pressure: x.pa != null && x.pa !== "" ? r1(num(x.pa)) : 0,
+    visibility: x.vs != null && x.vs !== "" ? Math.round(num(x.vs)) : 0,
+    snowfall: x.snowF != null && x.snowF !== "" ? r1(num(x.snowF)) : 0,
     discomfortIndex: r1(discomfort(temperature, humidity)),
   };
+  if (x.wIcon != null && x.wIcon !== "") o.condition = WICON[String(x.wIcon)] || "";
+  if (x.daylight) o.daylight = x.daylight === "N" ? "야간" : "주간";
+  if (x.cityKo) o.cityKo = x.cityKo;
+  if (x.cityEn) o.cityEn = x.cityEn;
+  if (x.countryEn) o.country = x.countryEn;
+  return o;
 }
 
 // "YYYYMMDD" + hour -> epoch seconds (treated as UTC; chart x-axis only)

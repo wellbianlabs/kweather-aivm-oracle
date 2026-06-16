@@ -11,6 +11,7 @@ const { ethers } = require("ethers");
 const CITIES = require("../lib/cities.json");
 const w = require("../.secrets/wallets.json");
 const dep = require("../deployments.bscTestnet.json");
+const { scaleObs, ORACLE_TUPLE } = require("../lib/world-scale");
 
 const SITE = process.env.SITE_URL || "https://kweather-aivm-oracle-wellbianlabs.vercel.app";
 const RPC = process.env.RPC_URL || "https://bsc-testnet-rpc.publicnode.com";
@@ -21,33 +22,19 @@ const POOL = Number(process.argv[4] || 8);
 const SEA = ["ID", "TH", "VN", "PH", "MY", "SG", "KH", "LA", "MM", "BN", "TL"];
 
 const ORACLE_ABI = [
-  "function pushBatch(uint256[] regionCodes, (uint256,int256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)[] data) external",
+  `function pushBatch(uint256[] regionCodes, ${ORACLE_TUPLE}[] data) external`,
   "function regionCount() view returns (uint256)",
-  "function peekLatest(uint256) view returns (uint256,int256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)",
+  `function peekLatest(uint256) view returns ${ORACLE_TUPLE}`,
   "function relayers(address) view returns (bool)",
-];
-
-const scale = (o) => [
-  BigInt(Math.trunc(o.time)),
-  BigInt(Math.round(o.temperature * 100)),
-  BigInt(Math.round(o.humidity)),
-  BigInt(Math.round(o.precipitation * 100)),
-  BigInt(Math.round(o.windSpeed * 100)),
-  BigInt(Math.round(o.windDirection)),
-  BigInt(Math.round(o.pm10)),
-  BigInt(Math.round(o.pm25)),
-  BigInt(Math.round(o.solarRadiation * 100)),
-  BigInt(Math.round(o.uvIndex * 10)),
-  BigInt(Math.round(o.discomfortIndex * 10)),
 ];
 
 async function fetchObs(city) {
   const [code, name, cc, lat, lon] = city;
-  const r = await fetch(`${SITE}/api/weather?lat=${lat}&lon=${lon}&code=${code}`);
+  const r = await fetch(`${SITE}/api/weather?code=${code}`);
   if (!r.ok) return null;
   const j = await r.json();
   const o = j.current || (j.series && j.series[j.series.length - 1]);
-  return o ? { code, name, cc, tuple: scale(o), temp: o.temperature } : null;
+  return o ? { code, name, cc, tuple: scaleObs(o), temp: o.temperature } : null;
 }
 
 // bounded-concurrency map that preserves input order

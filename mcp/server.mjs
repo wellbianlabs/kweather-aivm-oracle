@@ -22,6 +22,8 @@ import { ethers } from "ethers";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
+import worldScale from "../lib/world-scale.js";
+const { unscale, ORACLE_TUPLE } = worldScale;
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -32,7 +34,7 @@ const CFG = {
   explorer: "https://testnet.bscscan.com",
   token: process.env.TOKEN_ADDRESS || "0x04090599Dbaa990eabC37fFBDE223A4eD02e5b20",
   sm: process.env.SUBSCRIPTION_ADDRESS || "0xA34D6B699f16ed574A574a3E2b18ce063da4d911",
-  oracle: process.env.ORACLE_ADDRESS || "0x62FFc95E32052B7Fdd6E969fc645e3F134Fd2F3C",
+  oracle: process.env.ORACLE_ADDRESS || "0x2A2b4B6530ef062c80fCeEc23ae0d6167eAe9630",
   treasury: process.env.TREASURY || "0x77AC0aa9bE15b6272D54Df10Dc24EECAAc77f9db",
   site: process.env.SITE_URL || "https://kweather-aivm-oracle-wellbianlabs.vercel.app",
   agentKey: process.env.AGENT_PRIVATE_KEY || null,
@@ -84,10 +86,10 @@ const SM_ABI = [
   "function queriesPerMonth() view returns (uint256)",
 ];
 const ORACLE_ABI = [
-  "function peekLatest(uint256) view returns (tuple(uint256 timestamp,int256 temperature,uint256 humidity,uint256 precipitation,uint256 windSpeed,uint256 windDirection,uint256 pm10,uint256 pm25,uint256 solarRadiation,uint256 uvIndex,uint256 discomfortIndex))",
+  `function peekLatest(uint256) view returns ${ORACLE_TUPLE}`,
   "function observationCount(uint256) view returns (uint256)",
   "function getRegions() view returns (uint256[])",
-  "function queryLatest(uint256) returns (tuple(uint256 timestamp,int256 temperature,uint256 humidity,uint256 precipitation,uint256 windSpeed,uint256 windDirection,uint256 pm10,uint256 pm25,uint256 solarRadiation,uint256 uvIndex,uint256 discomfortIndex))",
+  `function queryLatest(uint256) returns ${ORACLE_TUPLE}`,
 ];
 
 const provider = new ethers.JsonRpcProvider(CFG.rpc);
@@ -99,21 +101,6 @@ const signer = CFG.agentKey ? new ethers.Wallet(CFG.agentKey, provider) : null;
 const ONE = 10n ** 18n;
 const fmt = (wei) => Number(ethers.formatUnits(wei, 18));
 const txUrl = (h) => `${CFG.explorer}/tx/${h}`;
-function unscale(d) {
-  return {
-    timestamp: Number(d.timestamp),
-    temperature: Number(d.temperature) / 100,
-    humidity: Number(d.humidity),
-    precipitation: Number(d.precipitation) / 100,
-    windSpeed: Number(d.windSpeed) / 100,
-    windDirection: Number(d.windDirection),
-    pm10: Number(d.pm10),
-    pm25: Number(d.pm25),
-    solarRadiation: Number(d.solarRadiation) / 100,
-    uvIndex: Number(d.uvIndex) / 10,
-    discomfortIndex: Number(d.discomfortIndex) / 10,
-  };
-}
 const ok = (obj) => ({ content: [{ type: "text", text: JSON.stringify(obj, null, 2) }] });
 const err = (msg) => ({ content: [{ type: "text", text: JSON.stringify({ error: msg }, null, 2) }], isError: true });
 const need = (n) => `Set AGENT_PRIVATE_KEY (a funded BSC-testnet wallet) to ${n}.`;

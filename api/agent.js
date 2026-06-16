@@ -13,9 +13,10 @@ const DP = require("../lib/decision-products");
 // Featured global cities (GeoNames id → label). The agent rotates through these.
 const REGIONS = { 1796236: "Shanghai, CN", 745044: "Istanbul, TR", 2332459: "Lagos, NG", 1566083: "Ho Chi Minh City, VN", 1275339: "Mumbai, IN", 3448439: "São Paulo, BR", 3530597: "Mexico City, MX", 524901: "Moscow, RU", 1185241: "Dhaka, BD", 1642911: "Jakarta, ID" };
 
+const { unscale, ORACLE_TUPLE } = require("../lib/world-scale");
 const ORACLE_ABI = [
-  "function queryLatest(uint256) returns (tuple(uint256,int256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256))",
-  "function peekHistory(uint256,uint256) view returns (tuple(uint256,int256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)[])",
+  `function queryLatest(uint256) returns ${ORACLE_TUPLE}`,
+  `function peekHistory(uint256,uint256) view returns ${ORACLE_TUPLE}[]`,
   "function observationCount(uint256) view returns (uint256)",
 ];
 const SM_ABI = [
@@ -31,37 +32,6 @@ const TOKEN_ABI = [
 
 let _cache = null;
 let _last = 0;
-
-function unscale(t) {
-  return {
-    time: Number(t[0]),
-    temperature: Number(t[1]) / 100,
-    humidity: Number(t[2]),
-    precipitation: Number(t[3]) / 100,
-    windSpeed: Number(t[4]) / 100,
-    windDirection: Number(t[5]),
-    pm10: Number(t[6]),
-    pm25: Number(t[7]),
-    solarRadiation: Number(t[8]) / 100,
-    uvIndex: Number(t[9]) / 10,
-    discomfortIndex: Number(t[10]) / 10,
-  };
-}
-const mean = (a) => (a.length ? a.reduce((s, x) => s + x, 0) / a.length : 0);
-function forecast(series) {
-  const day = series.filter((o) => o.solarRadiation > 0);
-  const ss = day.length ? day : series;
-  const avgSolar = mean(ss.map((o) => o.solarRadiation));
-  const avgWind = mean(series.map((o) => o.windSpeed));
-  const solarKw = Math.min(1000, avgSolar * 0.2778 * 5000 * 0.2);
-  const cutIn = 3, rated = 12;
-  const windKw = avgWind < cutIn ? 0 : avgWind >= rated ? 500 : 500 * Math.pow((avgWind - cutIn) / (rated - cutIn), 3);
-  const util = (solarKw + windKw) / 1500;
-  const kwh = Math.round((solarKw + windKw) * 6);
-  let action = util >= 0.6 ? "SELL_POWER (전력 판매 / PPA)" : util >= 0.3 ? "HOLD (포지션 유지)" : "BUY_HEDGE (DeFi 파생 헤지)";
-  return { avgSolar: round2(avgSolar), avgWind: round2(avgWind), kwh, util: round2(util), action };
-}
-const round2 = (x) => Math.round(x * 100) / 100;
 
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -104,7 +74,6 @@ module.exports = async (req, res) => {
     const count = Number(await oracle.observationCount(code));
     if (count === 0) return res.status(503).json({ error: "no on-chain data yet — relayer must run first" });
     const hist = (await oracle.peekHistory(code, Math.min(24, count))).map(unscale);
-    const f = forecast(hist);
     const dec = DP.decide(product, hist[hist.length - 1], hist); // chosen decision product
 
     // 3) metered query — pay & use
@@ -119,7 +88,7 @@ module.exports = async (req, res) => {
       regionCode: code,
       samples: hist.length,
       product,
-      forecast: f,
+      observation: hist[hist.length - 1],
       decision: dec.action,
       decisionDetail: dec,
       paidThisRun: paid,
