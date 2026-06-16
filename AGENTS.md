@@ -1,7 +1,7 @@
 # AGENTS.md — how AI agents buy & use this weather oracle
 
 This repo is an **on-chain weather data marketplace for autonomous AI agents**. Weather for
-5,345 world cities is published on-chain; agents pay an ERC-20 token (KWT) to query it.
+4,255 world cities is published on-chain; agents pay an ERC-20 token (KWT) to query it.
 
 ## The purchase → settlement → consume flow
 
@@ -58,18 +58,18 @@ The oracle's weather is turned into actionable, domain-specific decisions by a c
 
 | id | sector | decides |
 |---|---|---|
-| `solar-yield` | Energy | PV output → SELL_POWER / HOLD / BUY_HEDGE |
 | `wind-dispatch` | Energy | turbine power → DISPATCH / PARTIAL / CURTAIL |
 | `crop-irrigation` | Agriculture | water deficit → IRRIGATE_NOW / SKIP / drought alert |
 | `flood-watch` | Insurance/Safety | rain accumulation → CLEAR / WATCH / WARNING |
 | `heat-demand-response` | Utilities | cooling load → NORMAL / PEAK_SHAVE / EMERGENCY_DR |
 | `cold-chain` | Logistics | transport temp → OK / MONITOR / REROUTE |
-| `air-quality-ops` | HSE | PM2.5/PM10 → GO / LIMIT / HALT |
-| `uv-advisory` | Health/Retail | UV index → protection level |
 | `construction-safety` | Construction | wind/rain/heat → WORK / CAUTION / STOP |
 | `event-hedge` | Insurance/Events | rain/wind → CONFIRM / HEDGE / POSTPONE-PAYOUT |
 | `tourism-comfort` | Travel | comfort score → dynamic pricing |
 | `wildfire-risk` | Insurance/Safety | fire weather → LOW / ELEVATED / RED_FLAG |
+
+All decision inputs are limited to K-Weather world fields (temperature, humidity, wind,
+precipitation) — products that needed PM/solar/UV were removed.
 
 The autonomous agent (`GET /api/agent?product=<id>`) pays on-chain (subscribe + metered
 `queryLatest`) and returns the chosen product's decision. MCP tools: `list_decision_products()`,

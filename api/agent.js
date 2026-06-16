@@ -71,7 +71,7 @@ module.exports = async (req, res) => {
       return res.status(503).json({ error: "agent not configured" });
     }
     // which decision product to run (default: solar energy trading)
-    const product = req.query.product && DP.get(req.query.product) ? String(req.query.product) : "solar-yield";
+    const product = req.query.product && DP.get(req.query.product) ? String(req.query.product) : "heat-demand-response";
 
     // serve cached activity if called again quickly (avoid draining quota/gas)
     if (_cache && _cache.product === product && Date.now() - _last < 60_000) {

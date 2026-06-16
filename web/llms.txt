@@ -1,6 +1,6 @@
 # K-Weather × AIVM On-Chain Weather Oracle
 
-> Real-time weather for 5,345 world cities, sold on-chain. Autonomous AI agents purchase
+> Real-time weather for 4,255 world cities, sold on-chain. Autonomous AI agents purchase
 > access with an ERC-20 token (KWT) and consume verifiable weather data via smart-contract
 > queries on BNB Smart Chain testnet. Built for AI agents and "vibe coders" (Claude,
 > Gemini, Cursor, …) to discover, pay for, and use programmatically.
@@ -10,10 +10,10 @@ On-chain dApp: https://kweather-aivm-oracle-wellbianlabs.vercel.app/dapp
 Source: https://github.com/wellbianlabs/kweather-aivm-oracle
 
 ## What you can buy
-- 5,345 world cities (GeoNames id = on-chain region code). Fields: temperature, humidity,
-  precipitation, wind speed/direction, PM10, PM2.5, solar radiation, UV, discomfort index.
-- Data source: Open-Meteo worldwide; K-Weather world-weather premium overlay (global) when
-  the K-Weather world-weather entitlement is enabled. (Korea is not part of the sellable catalog.)
+- 4,255 world cities (GeoNames id = on-chain region code). Fields: temperature, humidity,
+  precipitation, wind speed, wind direction, discomfort index.
+- Data source: K-Weather 세계날씨 only (world realtime kw-world-r1 + hourly forecast kw-world-3d1).
+  Coverage = cities served by K-Weather's world feed. (Korea is served via a separate channel.)
 
 ## How settlement works (BNB Smart Chain testnet, chainId 97)
 - Settlement token: KWT (ERC-20). Gas: tBNB.
@@ -43,15 +43,15 @@ Add the `kweather-aivm-oracle` MCP server (mcp/server.mjs in the repo). Tools:
 Set env AGENT_PRIVATE_KEY (a funded testnet wallet) to enable the purchase tools.
 
 ### Option B — HTTP REST (any agent)
-- GET /api/catalog?q=Tokyo — search the 5,345-city catalog
+- GET /api/catalog?q=Tokyo — search the 4,255-city catalog
 - GET /api/quote — pricing, contracts, settlement token
-- GET /api/weather?lat=&lon=&code=<id> — free real-time preview (JSON, 24h series)
+- GET /api/weather?code=<id> — free real-time K-Weather preview (JSON: current + hourly series)
 - POST/GET /api/relay?id=&lat=&lon= — publish a city on-chain (relayer)
-- GET /api/decision — on-chain weather DECISION PRODUCTS catalog (12 products). Add ?city=<name|id>
+- GET /api/decision — on-chain weather DECISION PRODUCTS catalog (9 products). Add ?city=<name|id>
   to run all, or &product=<id> for one. Decides from on-chain oracle data; returns signal/action/
-  score/rationale per product. Products: solar-yield, wind-dispatch, crop-irrigation, flood-watch,
-  heat-demand-response, cold-chain, air-quality-ops, uv-advisory, construction-safety, event-hedge,
-  tourism-comfort, wildfire-risk. (Feed consumption settles via metered queryLatest or x402.)
+  score/rationale per product. Products: wind-dispatch, crop-irrigation, flood-watch,
+  heat-demand-response, cold-chain, construction-safety, event-hedge, tourism-comfort,
+  wildfire-risk. (Feed consumption settles via metered queryLatest or x402.)
 - Metered purchase + query happens via the smart contracts (see /openapi.json and /api/quote).
 
 ### Option C — x402 (HTTP 402, KEYLESS pay-per-call) — MULTI-ASSET

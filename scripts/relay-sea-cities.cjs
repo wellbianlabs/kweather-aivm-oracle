@@ -46,7 +46,7 @@ async function fetchObs(city) {
   const r = await fetch(`${SITE}/api/weather?lat=${lat}&lon=${lon}&code=${code}`);
   if (!r.ok) return null;
   const j = await r.json();
-  const o = j.series && j.series[j.series.length - 1];
+  const o = j.current || (j.series && j.series[j.series.length - 1]);
   return o ? { code, name, cc, tuple: scale(o), temp: o.temperature } : null;
 }
 

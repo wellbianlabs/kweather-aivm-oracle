@@ -3,7 +3,7 @@
  * KWeather × AIVM Oracle — MCP server.
  *
  * Lets any MCP-capable AI agent (Claude Desktop, Cursor, Gemini CLI, …) discover,
- * PURCHASE and CONSUME on-chain weather data for 5,345 world cities.
+ * PURCHASE and CONSUME on-chain weather data for 4,255 world cities.
  *
  * Settlement model (BNB Smart Chain testnet):
  *   - KWT (ERC-20) is the settlement token; tBNB pays gas.
@@ -123,7 +123,7 @@ const server = new McpServer({ name: "kweather-aivm-oracle", version: "1.0.0" })
 
 server.tool(
   "search_cities",
-  "Search the catalog of 5,345 purchasable world weather cities by name. Returns id (on-chain code), name, country, coordinates.",
+  "Search the catalog of 4,255 purchasable world weather cities by name. Returns id (on-chain code), name, country, coordinates.",
   { query: z.string().describe("city name fragment, e.g. 'Tokyo'"), limit: z.number().optional() },
   async ({ query, limit }) => {
     const q = String(query).trim().toLowerCase();
@@ -134,7 +134,7 @@ server.tool(
 
 server.tool(
   "get_weather",
-  "Free real-time weather preview for a city (Open-Meteo worldwide; K-Weather premium overlay where entitled). No payment. Use buy_weather for the metered on-chain feed.",
+  "Free real-time K-Weather 세계날씨 preview for a city (temperature, humidity, wind, precipitation). No payment. Use buy_weather for the metered on-chain feed.",
   { city: z.string().describe("city name or id") },
   async ({ city }) => {
     const c = findCity(city);
@@ -357,7 +357,7 @@ server.tool(
 
 server.tool(
   "decide",
-  "Run weather decision product(s) for a city using ON-CHAIN oracle data. Returns each product's signal, action, score (0..1) and rationale. `product` is optional (omit = run all). Examples: flood-watch, solar-yield, air-quality-ops, crop-irrigation, wildfire-risk, heat-demand-response.",
+  "Run weather decision product(s) for a city using ON-CHAIN oracle data. Returns each product's signal, action, score (0..1) and rationale. `product` is optional (omit = run all). Examples: flood-watch, crop-irrigation, wildfire-risk, heat-demand-response, cold-chain, wind-dispatch.",
   { city: z.string().describe("city name or on-chain id"), product: z.string().optional().describe("decision product id; omit to run all") },
   async ({ city, product }) => {
     const u = `${CFG.site}/api/decision?city=${encodeURIComponent(city)}` + (product ? `&product=${encodeURIComponent(product)}` : "");

@@ -7,8 +7,8 @@
 
 const { ethers } = require("ethers");
 
-// Featured global cities (GeoNames id = on-chain code). `wc` = K-Weather world city code
-// (kw-world-r1) used when the key has 세계날씨 entitlement; otherwise Open-Meteo.
+// Featured global cities (GeoNames id = on-chain code). `wc` = K-Weather world city code;
+// the /api/weather feed also auto-resolves it from the GeoNames id (lib/worldcodes.json).
 const FEATURED = [
   { code: 1796236, lat: 31.2222, lon: 121.4581, wc: 15107 }, // Shanghai
   { code: 745044, lat: 41.0138, lon: 28.9497, wc: 15127 }, // Istanbul
@@ -53,7 +53,7 @@ module.exports = async (req, res) => {
       const r = await fetch(`${base}/api/weather?lat=${rg.lat}&lon=${rg.lon}&code=${rg.code}${wc}`);
       if (!r.ok) continue;
       const j = await r.json();
-      const o = j.series && j.series[j.series.length - 1];
+      const o = j.current || (j.series && j.series[j.series.length - 1]);
       if (!o) continue;
       codes.push(rg.code);
       tuples.push([

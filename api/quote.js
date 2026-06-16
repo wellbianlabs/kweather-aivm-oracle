@@ -17,7 +17,7 @@ module.exports = async (req, res) => {
     const f = (w) => Number(ethers.formatUnits(w, 18));
     return res.status(200).json({
       product: "K-Weather × AIVM on-chain weather oracle",
-      coverage: "5,345 world cities, real-time (temperature, humidity, precip, wind, PM10/2.5, solar, UV)",
+      coverage: "4,255 world cities, K-Weather 세계날씨 real-time (temperature, humidity, precipitation, wind speed/direction, discomfort index)",
       chain: { name: "BNB Smart Chain Testnet", chainId: 97, explorer: "https://testnet.bscscan.com" },
       settlementToken: { symbol: "KWT", address: TOKEN_ADDRESS, note: "testnet ERC-20; gas paid in tBNB" },
       pricing: {
@@ -27,7 +27,7 @@ module.exports = async (req, res) => {
       contracts: { oracle: ORACLE_ADDRESS, subscriptionManager: SUBSCRIPTION_ADDRESS, token: TOKEN_ADDRESS },
       howToConsume: {
         mcp: "Add the 'kweather-aivm-oracle' MCP server (mcp/server.mjs). Tools: search_cities, get_weather, get_pricing, get_account, subscribe, deposit_prepaid, buy_weather.",
-        rest: "GET /api/catalog?q=<city> to find a city; GET /api/weather?lat=&lon=&code=<id> for a free preview; metered on-chain purchase via the contracts (see /llms.txt).",
+        rest: "GET /api/catalog?q=<city> to find a city; GET /api/weather?code=<id> for a free K-Weather preview; metered on-chain purchase via the contracts (see /llms.txt).",
       },
       discovery: "/llms.txt , /openapi.json",
     });

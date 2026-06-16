@@ -1,6 +1,6 @@
-/* KWeather × AIVM Oracle — global weather explorer (5,345 sellable cities).
-   Real data via /api/weather (Open-Meteo worldwide; K-Weather premium overlay for KR
-   legacy codes). Deterministic mock fallback when offline. */
+/* KWeather × AIVM Oracle — global weather explorer (4,255 sellable cities).
+   Real data via /api/weather — K-Weather 세계날씨 only (world realtime + hourly forecast).
+   Deterministic mock fallback when offline. */
 "use strict";
 
 const GH_URL = "https://github.com/wellbianlabs/kweather-aivm-oracle";
@@ -9,8 +9,8 @@ const CITIES = (window.CITIES || []).map(([id, name, cc, lat, lon]) => ({ id, na
 const CITY_BY_ID = new Map(CITIES.map((c) => [c.id, c]));
 const FEATURED = (window.FEATURED || []).map((f) => ({ id: f.id, name: f.name, cc: f.country, lat: f.lat, lon: f.lon }));
 
-// GeoNames id -> K-Weather world city code (kw-world-r1). Activates K-Weather 세계날씨
-// when the configured key has the entitlement; otherwise the API falls back to Open-Meteo.
+// GeoNames id -> K-Weather world city code (kw-world-r1). The /api/weather feed resolves
+// the world code from the GeoNames id automatically (see lib/worldcodes.json).
 const WORLDCODE = {
   1796236: 15107, 745044: 15127, 2332459: 16089, 1566083: 17963, 1275339: 15098,
   3448439: 15063, 3530597: 15033, 524901: 15010, 1185241: 15055, 1850147: 15104,
@@ -74,11 +74,7 @@ async function loadReal() {
   const got = sources.filter(Boolean);
   if (!got.length) throw new Error("no data");
   DATA.real = true;
-  DATA.source = got.some((s) => s.includes("kweather-world"))
-    ? "케이웨더 세계날씨"
-    : got.some((s) => s.includes("kweather"))
-    ? "KWEATHER+OPEN-METEO"
-    : "OPEN-METEO 실시간";
+  DATA.source = "케이웨더 세계날씨";
 }
 
 const seriesOf = (city) => (DATA.real && DATA.byId[city.id] ? DATA.byId[city.id] : mockSeries(city));

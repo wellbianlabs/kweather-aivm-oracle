@@ -86,11 +86,12 @@ module.exports = async (req, res) => {
     } else {
       // fall back to live feed for cities not yet published on-chain
       const base = process.env.SELF_URL || `https://${req.headers.host}`;
-      const wj = await (await fetch(`${base}/api/weather?lat=${city.lat}&lon=${city.lon}&code=${city.code}`)).json();
+      const wj = await (await fetch(`${base}/api/weather?code=${city.code}`)).json();
       // /api/weather uses `time`; normalize to `timestamp` to match the on-chain shape
       history = (wj.series || []).map((o) => ({ ...o, timestamp: o.timestamp != null ? o.timestamp : o.time }));
-      latest = history[history.length - 1];
-      source = wj.source || "open-meteo";
+      const cur = wj.current ? { ...wj.current, timestamp: wj.current.time } : null;
+      latest = cur || history[history.length - 1];
+      source = wj.source || "kweather-world";
     }
     if (!latest) return res.status(502).json({ error: "no observation available for this city" });
 

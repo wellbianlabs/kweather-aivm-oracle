@@ -3,13 +3,13 @@
   "info": {
     "title": "K-Weather × AIVM On-Chain Weather Oracle API",
     "version": "1.0.0",
-    "description": "Real-time weather for 5,345 world cities, purchasable on-chain by AI agents. See /llms.txt for the agent guide and settlement model."
+    "description": "Real-time weather for 4,255 world cities, purchasable on-chain by AI agents. See /llms.txt for the agent guide and settlement model."
   },
   "servers": [{ "url": "https://kweather-aivm-oracle-wellbianlabs.vercel.app" }],
   "paths": {
     "/api/catalog": {
       "get": {
-        "summary": "Search the 5,345-city catalog",
+        "summary": "Search the 4,255-city catalog",
         "parameters": [
           { "name": "q", "in": "query", "schema": { "type": "string" }, "description": "city name fragment" },
           { "name": "limit", "in": "query", "schema": { "type": "integer" } }
@@ -50,7 +50,7 @@
       "get": {
         "summary": "Autonomous agent demo: subscribes, pays, queries on-chain, returns a decision",
         "parameters": [
-          { "name": "product", "in": "query", "schema": { "type": "string" }, "description": "decision product id (default solar-yield)" }
+          { "name": "product", "in": "query", "schema": { "type": "string" }, "description": "decision product id (default heat-demand-response)" }
         ],
         "responses": { "200": { "description": "agent activity + decision + tx hashes" } }
       }
