@@ -71,6 +71,17 @@ The oracle's weather is turned into actionable, domain-specific decisions by a c
 | `storm-pressure` | Insurance/Marine | pressure(기압)+wind → STORM / WATCH / STABLE |
 | `visibility-ops` | Transport | visibility(가시거리) → HALT / CAUTION / GO |
 | `snow-ops` | Logistics/Public | snowfall(적설) → DEPLOY / PREP / CLEAR |
+| `air-quality-ops` | HSE (KR) | PM10/PM2.5 → GO / LIMIT / HALT |
+| `marine-ops` | Marine | wind/visibility/pressure → SAIL / CAUTION / PORT_HOLD |
+| `drone-ops` | UAV/Delivery | wind/precip/visibility → FLY / RESTRICT / NO_FLY |
+| `road-frost` | Transport | temp/precip/humidity → CLEAR / WATCH / ICE |
+| `heating-demand` | Utilities | felt-temp (HDD) → NORMAL / HIGH / PEAK |
+| `crop-disease` | Agriculture | temp/humidity → LOW / ELEVATED / spray |
+| `frost-alert` | Agriculture | low-temp/humidity/wind → SAFE / RISK / FROST |
+| `retail-footfall` | Retail | precip/temp/discomfort → GOOD / SOFT / LOW |
+| `vector-risk` | Public Health | temp/humidity/precip → LOW / ELEVATED / HIGH |
+| `powerline-icing` | Grid | snowfall/temp/wind → LOW / WATCH / ICING |
+| `water-demand` | Utilities | temp/discomfort → NORMAL / HIGH / PEAK |
 
 All inputs come from the K-Weather world feed: temperature, senseTemp(체감), humidity,
 precipitation, wind speed/direction, pressure(기압), visibility(가시거리), snowfall(적설),
