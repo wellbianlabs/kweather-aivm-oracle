@@ -15,7 +15,7 @@ module.exports = async (req, res) => {
     for (const [code, v] of Object.entries(j.data)) {
       const d = v && v.data;
       if (!d || d.lat == null || d.lon == null) continue;
-      out[code] = { city: d.city_en, country: d.country_en, lat: Number(d.lat), lon: Number(d.lon) };
+      out[code] = { city: d.cityEn || d.city_en || d.city || "", country: d.countryEn || d.country_en || d.country || "", lat: Number(d.lat), lon: Number(d.lon) };
     }
     return res.status(200).json({ count: Object.keys(out).length, cities: out });
   } catch (e) {
