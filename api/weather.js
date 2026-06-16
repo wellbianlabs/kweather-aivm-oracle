@@ -10,6 +10,7 @@
 
 const OM_FORECAST = "https://api.open-meteo.com/v1/forecast";
 const OM_AIR = "https://air-quality-api.open-meteo.com/v1/air-quality";
+const WORLDCODES = require("../lib/worldcodes.json"); // GeoNames id -> K-Weather world city code
 
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -47,11 +48,13 @@ module.exports = async (req, res) => {
     }
 
     // K-Weather WORLD weather overlay (kw-world-r1) for global cities — activates when the
-    // configured key has 세계날씨 entitlement and a K-Weather world city code is provided.
+    // configured key has 세계날씨 entitlement and a K-Weather world city code is known.
+    // The world code is taken from ?worldcode= or auto-resolved from the GeoNames ?code=.
     // Falls back silently to Open-Meteo otherwise (e.g. demo keys return error 002).
-    if (process.env.KWEATHER_API_KEY && req.query.worldcode) {
+    const worldCode = req.query.worldcode || (req.query.code && WORLDCODES[String(req.query.code)]);
+    if (process.env.KWEATHER_API_KEY && worldCode) {
       try {
-        const w = await fetchKWeatherWorld(String(req.query.worldcode));
+        const w = await fetchKWeatherWorld(String(worldCode));
         if (w) {
           const last = series[series.length - 1];
           last.temperature = r1(w.temperature);
