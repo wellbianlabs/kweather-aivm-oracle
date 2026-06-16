@@ -19,6 +19,18 @@ module.exports = async (req, res) => {
   try {
     if (!process.env.KWEATHER_API_KEY) return res.status(503).json({ error: "K-Weather not configured" });
 
+    // DOMESTIC (Korea) — a 10-digit 법정동코드 routes to the K-Weather domestic feed (incl. PM).
+    const codeStr = req.query.code ? String(req.query.code) : "";
+    if (/^\d{10}$/.test(codeStr)) {
+      const current = await fetchKoreaDomestic(codeStr);
+      if (!current) return res.status(502).json({ error: "no K-Weather domestic observation for this 법정동" });
+      let series = [];
+      try { series = await fetchKoreaForecast(codeStr, current); } catch { /* best-effort */ }
+      if (!series.length) series = [current];
+      else series[series.length - 1] = current;
+      return res.status(200).json({ source: "kweather-domestic", current, series });
+    }
+
     const worldCode = req.query.worldcode || (req.query.code && WORLDCODES[String(req.query.code)]);
     if (!worldCode) {
       return res.status(404).json({ error: "city not covered by K-Weather 세계날씨 (no world code)" });
@@ -95,6 +107,63 @@ function obs(x) {
   if (x.cityKo) o.cityKo = x.cityKo;
   if (x.cityEn) o.cityEn = x.cityEn;
   if (x.countryEn) o.country = x.countryEn;
+  return o;
+}
+
+// --- DOMESTIC Korea (법정동) : kw-odam1 (현재날씨) + kw-dust-r1 (미세먼지) merged ---
+async function kwGet(pathSeg) {
+  const key = process.env.KWEATHER_API_KEY;
+  const r = await fetch(`${KW_BASE}/${pathSeg}?api_key=${encodeURIComponent(key)}`, { signal: AbortSignal.timeout(6000) });
+  if (!r.ok) return null;
+  const j = await r.json();
+  return String(j.error) === "0" ? j : null;
+}
+function firstData(j) {
+  if (!j || !j.data) return null;
+  if (j.data.data) return j.data.data;
+  const f = Object.values(j.data).find((v) => v && v.data);
+  return f ? f.data : (typeof j.data === "object" ? j.data : null);
+}
+async function fetchKoreaDomestic(code) {
+  const [odam, dust] = await Promise.all([kwGet(`kw-odam1/${code}`).catch(() => null), kwGet(`kw-dust-r1/${code}`).catch(() => null)]);
+  const d = firstData(odam), a = firstData(dust);
+  if (!d && !a) return null;
+  const temp = num(d && d.t1h, a && a.temp);
+  return korObs(Math.floor(Date.now() / 1000), {
+    temp, senseTemp: d && d.senseTemp, humidity: Math.round(num(d && d.reh, a && a.humi)),
+    rn1: d && d.rn1, wsd: num(d && d.wsd, a && a.ws), vec: num(d && d.vec, a && a.wd),
+    pm10: a && a.pm10, pm25: a && a.pm25, wText: d && d.wText, wIcon: d && d.wIcon,
+  });
+}
+async function fetchKoreaForecast(code, current) {
+  const j = firstData(await kwGet(`kw-vsrt1/${code}`).catch(() => null));
+  if (!j || !Array.isArray(j.tmp)) return [];
+  const n = Math.min(6, j.tmp.length), now = Math.floor(Date.now() / 1000), out = [];
+  for (let i = 0; i < n; i++) {
+    out.push(korObs(now + i * 3600, {
+      temp: j.tmp[i], senseTemp: j.tmp[i], humidity: Math.round(num(j.reh && j.reh[i])),
+      rn1: j.pcp && j.pcp[i], wsd: num(j.wsd && j.wsd[i]), vec: num(j.vec && j.vec[i]),
+      pm10: current.pm10, pm25: current.pm25, wIcon: j.wIcon && j.wIcon[i],
+    }));
+  }
+  return out;
+}
+function korObs(time, x) {
+  const temperature = num(x.temp), humidity = x.humidity || 0;
+  const o = {
+    time,
+    temperature: r1(temperature),
+    senseTemp: x.senseTemp != null && x.senseTemp !== "" ? r1(num(x.senseTemp)) : r1(temperature),
+    humidity,
+    precipitation: x.rn1 != null && x.rn1 !== "" ? r1(num(x.rn1)) : 0,
+    windSpeed: r1(num(x.wsd)),
+    windDirection: Math.round(num(x.vec)),
+    pm10: x.pm10 != null && x.pm10 !== "" ? r1(num(x.pm10)) : 0,
+    pm25: x.pm25 != null && x.pm25 !== "" ? r1(num(x.pm25)) : 0,
+    discomfortIndex: r1(discomfort(temperature, humidity)),
+  };
+  if (x.wText) o.condition = x.wText;
+  else if (x.wIcon != null && x.wIcon !== "") o.condition = WICON[String(x.wIcon)] || "";
   return o;
 }
 
