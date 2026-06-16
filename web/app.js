@@ -9,7 +9,7 @@ const CITIES = (window.CITIES || []).map(([id, name, cc, lat, lon]) => ({ id, na
 const CITY_BY_ID = new Map(CITIES.map((c) => [c.id, c]));
 const FEATURED = (window.FEATURED || []).map((f) => ({ id: f.id, name: f.name, cc: f.country, lat: f.lat, lon: f.lon }));
 
-// GeoNames id -> K-Weather world city code (kw-world-rt1). Activates K-Weather 세계날씨
+// GeoNames id -> K-Weather world city code (kw-world-r1). Activates K-Weather 세계날씨
 // when the configured key has the entitlement; otherwise the API falls back to Open-Meteo.
 const WORLDCODE = {
   1796236: 15107, 745044: 15127, 2332459: 16089, 1566083: 17963, 1275339: 15098,

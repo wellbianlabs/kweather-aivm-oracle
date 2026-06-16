@@ -46,7 +46,7 @@ module.exports = async (req, res) => {
       }
     }
 
-    // K-Weather WORLD weather overlay (kw-world-rt1) for global cities — activates when the
+    // K-Weather WORLD weather overlay (kw-world-r1) for global cities — activates when the
     // configured key has 세계날씨 entitlement and a K-Weather world city code is provided.
     // Falls back silently to Open-Meteo otherwise (e.g. demo keys return error 002).
     if (process.env.KWEATHER_API_KEY && req.query.worldcode) {
@@ -56,7 +56,7 @@ module.exports = async (req, res) => {
           const last = series[series.length - 1];
           last.temperature = r1(w.temperature);
           if (w.humidity != null) last.humidity = w.humidity;
-          last.precipitation = r1(w.precipitation);
+          if (w.precipitation != null) last.precipitation = r1(w.precipitation);
           last.windSpeed = r1(w.windSpeed);
           if (w.windDirection != null) last.windDirection = w.windDirection;
           last.discomfortIndex = r1(discomfort(w.temperature, w.humidity != null ? w.humidity : last.humidity));
@@ -171,32 +171,40 @@ async function kweatherFor(code) {
   return snap[String(code).substring(0, 2)] || null;
 }
 
-// K-Weather WORLD realtime (kw-world-rt1) for a given K-Weather world city code (15000+).
+// K-Weather WORLD realtime (kw-world-r1) for a given K-Weather world city code (15000+).
 // Requires a key with 세계날씨 entitlement; returns null otherwise (gateway error 002).
-// Field names mirror the domestic schema with defensive fallbacks.
+// Maps the OpenAPI world schema (temp/humi/ws/wd/rainF) to our normalized fields.
 async function fetchKWeatherWorld(worldCode) {
-  const base = process.env.KWEATHER_API_URL || "https://gateway.kweather.co.kr/weather/w3/v2/kw-sensors";
+  const base = process.env.KWEATHER_API_URL || "https://gateway.kweather.co.kr:8443/weather/w3/v2/kw-sensors";
   const key = process.env.KWEATHER_API_KEY;
-  const r = await fetch(`${base}/kw-world-rt1/${encodeURIComponent(worldCode)}?api_key=${encodeURIComponent(key)}`, {
+  // kw-world-r1 = world realtime for one city code (15000+). Per the OpenAPI spec the payload
+  // is { data: { service, data: { temp, senseTemp, humi, ws, wd(compass), rainF, wIcon, ... } } }.
+  const r = await fetch(`${base}/kw-world-r1/${encodeURIComponent(worldCode)}?api_key=${encodeURIComponent(key)}`, {
     signal: AbortSignal.timeout(6000),
   });
   if (!r.ok) return null;
   const j = await r.json();
   if (String(j.error) !== "0" || !j.data) return null;
-  const first = typeof j.data === "object" ? Object.values(j.data)[0] : null;
-  const d = (first && first.data) || first;
-  if (!d) return null;
-  const present = (...xs) => xs.some((v) => v !== undefined && v !== null && v !== "");
-  if (!present(d.t1h, d.ta, d.temp, d.temperature)) return null;
+  let d = j.data.data; // single-city shape
+  if (!d && typeof j.data === "object") { const f = Object.values(j.data).find((v) => v && v.data); d = f && f.data; }
+  if (!d || (d.temp == null && d.senseTemp == null)) return null;
   return {
-    temperature: num(d.t1h, d.ta, d.temp, d.temperature),
-    humidity: present(d.reh, d.humidity, d.rh) ? Math.round(num(d.reh, d.humidity, d.rh)) : null,
-    precipitation: num(d.rn1, d.rain, d.precipitation, d.pcp),
-    windSpeed: num(d.wsd, d.ws, d.windSpeed),
-    windDirection: present(d.vec, d.wd, d.windDirection) ? Math.round(num(d.vec, d.wd, d.windDirection)) : null,
-    condition: d.wText || d.weather || d.sky || undefined,
+    temperature: num(d.temp, d.senseTemp),
+    humidity: d.humi != null && d.humi !== "" ? Math.round(num(d.humi)) : null,
+    precipitation: d.rainF != null && d.rainF !== "" ? num(d.rainF) : null, // mm; often null -> keep Open-Meteo
+    windSpeed: num(d.ws),
+    windDirection: compassToDeg(d.wd), // wd is a compass string ("SW"); convert to degrees
   };
 }
+
+// 16-point compass label -> degrees (kw-world-r1 returns wind direction as text)
+const COMPASS = { N: 0, NNE: 22.5, NE: 45, ENE: 67.5, E: 90, ESE: 112.5, SE: 135, SSE: 157.5, S: 180, SSW: 202.5, SW: 225, WSW: 247.5, W: 270, WNW: 292.5, NW: 315, NNW: 337.5 };
+const compassToDeg = (wd) => {
+  if (wd == null || wd === "") return null;
+  if (typeof wd === "number" || /^\d+(\.\d+)?$/.test(String(wd))) return Math.round(Number(wd));
+  const k = String(wd).toUpperCase().trim();
+  return COMPASS[k] != null ? Math.round(COMPASS[k]) : null;
+};
 
 // coalescing numeric parse: returns the first usable value (supports fallback field names)
 const num = (...xs) => {

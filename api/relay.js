@@ -8,7 +8,7 @@
 const { ethers } = require("ethers");
 
 // Featured global cities (GeoNames id = on-chain code). `wc` = K-Weather world city code
-// (kw-world-rt1) used when the key has 세계날씨 entitlement; otherwise Open-Meteo.
+// (kw-world-r1) used when the key has 세계날씨 entitlement; otherwise Open-Meteo.
 const FEATURED = [
   { code: 1796236, lat: 31.2222, lon: 121.4581, wc: 15107 }, // Shanghai
   { code: 745044, lat: 41.0138, lon: 28.9497, wc: 15127 }, // Istanbul
