@@ -176,7 +176,7 @@ function renderCities() {
   grid.querySelectorAll(".rcard").forEach((el) =>
     el.addEventListener("click", (ev) => {
       if (ev.target.dataset.rm) { removeCity(Number(ev.target.dataset.rm)); return; }
-      SELECTED = Number(el.dataset.id); IDX = Math.min(IDX, lenOf(selCity()) - 1); renderAll();
+      SELECTED = Number(el.dataset.id); IDX = lenOf(selCity()) - 1; renderAll();
     })
   );
 }
@@ -245,7 +245,7 @@ function renderFlow() {
   document.getElementById("flowScaled").textContent = `×100 → ${scaleField(o.temperature, 100)}`;
 }
 function renderAll() {
-  document.getElementById("hourLabel").textContent = labelAt(selCity(), IDX);
+  const hl = document.getElementById("hourLabel"); if (hl) hl.textContent = labelAt(selCity(), IDX);
   const sp = document.getElementById("srcPill"); if (sp) sp.textContent = DATA.source;
   renderFlow(); renderCities(); renderStruct(); renderAgents();
 }
@@ -293,17 +293,13 @@ async function init() {
   document.getElementById("ghLink").href = GH_URL;
   document.getElementById("ghLinkFoot").href = GH_URL;
   wireSearch();
-  const slider = document.getElementById("hourSlider");
 
   try {
     await loadReal();
-    const maxIdx = lenOf(selCity()) - 1;
-    slider.max = String(maxIdx); IDX = maxIdx;
+    IDX = lenOf(selCity()) - 1; // always show the latest observation
   } catch (e) {
-    DATA.real = false; DATA.source = "MOCK (offline)"; slider.max = "23"; IDX = 12;
+    DATA.real = false; DATA.source = t("MOCK (오프라인)", "MOCK (offline)"); IDX = lenOf(selCity()) - 1;
   }
-  slider.value = IDX;
-  slider.addEventListener("input", () => { IDX = Number(slider.value); renderAll(); });
   if (window.KW) window.KW.onLang(() => {
     DATA.source = DATA.real ? t("케이웨더 세계날씨", "K-Weather world weather") : t("MOCK (오프라인)", "MOCK (offline)");
     renderAll();
