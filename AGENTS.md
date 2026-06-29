@@ -75,6 +75,7 @@ The oracle's weather is turned into actionable, domain-specific decisions by a c
 | `marine-ops` | Marine | wind/visibility/pressure → SAIL / CAUTION / PORT_HOLD |
 | `drone-ops` | UAV/Delivery | wind/precip/visibility → FLY / RESTRICT / NO_FLY |
 | `road-frost` | Transport | temp/precip/humidity → CLEAR / WATCH / ICE |
+| `autonomous-driving` | Mobility | visibility/precip/snow/temp/wind → FULL / DEGRADED / DISENGAGE |
 | `heating-demand` | Utilities | felt-temp (HDD) → NORMAL / HIGH / PEAK |
 | `crop-disease` | Agriculture | temp/humidity → LOW / ELEVATED / spray |
 | `frost-alert` | Agriculture | low-temp/humidity/wind → SAFE / RISK / FROST |

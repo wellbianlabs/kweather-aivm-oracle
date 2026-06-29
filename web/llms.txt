@@ -50,13 +50,13 @@ Set env AGENT_PRIVATE_KEY (a funded testnet wallet) to enable the purchase tools
 - GET /api/quote — pricing, contracts, settlement token
 - GET /api/weather?code=<id> — free real-time K-Weather preview (JSON: current + hourly series)
 - POST/GET /api/relay?id=&lat=&lon= — publish a city on-chain (relayer)
-- GET /api/decision — on-chain weather DECISION PRODUCTS catalog (24 products). Add ?city=<name|id>
+- GET /api/decision — on-chain weather DECISION PRODUCTS catalog (25 products). Add ?city=<name|id>
   to run all, or &product=<id> for one. Decides from on-chain oracle data; returns signal/action/
   score/rationale per product. Products: wind-dispatch, crop-irrigation, flood-watch,
   heat-demand-response, cold-chain, construction-safety, event-hedge, tourism-comfort,
   wildfire-risk, heat-stress, storm-pressure, visibility-ops, snow-ops, air-quality-ops,
-  marine-ops, drone-ops, road-frost, heating-demand, crop-disease, frost-alert,
-  retail-footfall, vector-risk, powerline-icing, water-demand.
+  marine-ops, drone-ops, road-frost, autonomous-driving, heating-demand, crop-disease,
+  frost-alert, retail-footfall, vector-risk, powerline-icing, water-demand.
   (Feed consumption settles via metered queryLatest or x402.)
 - Metered purchase + query happens via the smart contracts (see /openapi.json and /api/quote).
 

@@ -131,7 +131,7 @@ node scripts/x402-client.mjs "London" usdt-testnet-permit2 # USDT via Permit2 (�
 USDT Permit2 [tx](https://testnet.bscscan.com/tx/0x545b26f1894f0506cb9fbb5409eb1e58ea2fd34efba1eff7cd0985e931a85a0d).
 MCP 도구: `pay_x402(city, asset?)`.
 
-## 온체인 의사결정 상품 (24종)
+## 온체인 의사결정 상품 (25종)
 
 오라클의 **온체인 날씨**를 도메인별 실행 가능한 의사결정으로 바꾸는 상품 카탈로그입니다.
 `GET /api/decision?city=<도시명|id>`는 전 상품을, `&product=<id>`는 단일 상품을 실행합니다(파라미터
@@ -153,6 +153,7 @@ MCP 도구: `pay_x402(city, asset?)`.
 | `marine-ops` | 해상 | 풍속·가시거리·기압 → 출항/주의/통제 |
 | `drone-ops` | 드론·배송 | 풍속·강수·가시거리 → 비행/제한/금지 |
 | `road-frost` | 교통·안전 | 기온·강수·습도 → 정상/주의/결빙 |
+| `autonomous-driving` | 모빌리티·교통 | 가시거리·강수·적설·기온·풍속 → 자율주행/제한/수동전환 |
 | `heating-demand` | 전력·가스 | 체감온도(난방도일) → 정상/높음/피크 |
 | `crop-disease` | 농업 | 기온·습도 → 정상/예찰/방제 |
 | `frost-alert` | 농업 | 저온·습도·풍속 → 정상/주의/서리경보 |
