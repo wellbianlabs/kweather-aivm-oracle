@@ -267,8 +267,33 @@ function wireDappSearch() {
 async function loadDecisionProducts() {
   try { const j = await (await fetch("/api/decision")).json(); const sel = $("decProduct"); if (sel) (j.products || []).forEach((p) => sel.add(new Option(`${p.emoji} ${p.name}`, p.id))); } catch { /* non-fatal */ }
 }
+let decSelectedCode = null; // exact region code chosen from autocomplete (world id or 10-digit 동코드)
+function wireDecisionSearch() {
+  const box = $("decCity"), list = $("decResults");
+  if (!box || !list) return;
+  const render = (q) => {
+    q = q.trim().toLowerCase();
+    if (!q) { list.style.display = "none"; return; }
+    const hits = [];
+    for (const c of CITIES) {
+      if (c.name.toLowerCase().includes(q) || `${c.name}, ${c.cc}`.toLowerCase().includes(q)) { hits.push(c); if (hits.length >= 12) break; }
+    }
+    list.innerHTML = hits.map((c) => `<div class="sres" data-id="${c.id}">${c.name} <span class="cc">${isDong(c.id) ? t("KR 동", "KR 동") : c.cc}</span></div>`).join("");
+    list.style.display = hits.length ? "block" : "none";
+    list.querySelectorAll(".sres").forEach((el) => el.addEventListener("mousedown", (ev) => {
+      ev.preventDefault();
+      const c = CITY_BY_ID.get(Number(el.dataset.id));
+      box.value = isDong(c.id) ? c.name : `${c.name}, ${c.cc}`;
+      decSelectedCode = String(c.id);
+      list.style.display = "none";
+    }));
+  };
+  box.addEventListener("input", () => { decSelectedCode = null; render(box.value); }); // typing clears the exact pick
+  box.addEventListener("focus", () => box.value && render(box.value));
+  box.addEventListener("blur", () => setTimeout(() => (list.style.display = "none"), 150));
+}
 async function runDecision() {
-  const city = ($("decCity").value || "Jakarta").trim();
+  const city = (decSelectedCode || $("decCity").value || "Jakarta").toString().trim();
   const product = $("decProduct").value;
   await withBusy($("decBtn"), t("결정 중…", "Deciding…"), async () => {
     const u = `/api/decision?city=${encodeURIComponent(city)}` + (product ? `&product=${encodeURIComponent(product)}` : "");
@@ -286,6 +311,7 @@ async function runDecision() {
 function main() {
   $("regionSel").innerHTML = FEATURED.map((c) => `<option value="${c.id}">${c.name}, ${c.cc}</option>`).join("");
   wireDappSearch();
+  wireDecisionSearch();
   loadDecisionProducts();
   $("decBtn")?.addEventListener("click", runDecision);
   if (!CFG) { notDeployed(); return; }
