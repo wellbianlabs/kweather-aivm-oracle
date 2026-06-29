@@ -123,6 +123,7 @@ async function connect() {
   $("connectBtn").textContent = short(account);
   ["faucetBtn", "subBtn", "prepayBtn", "queryBtn"].forEach((id) => ($(id).disabled = false));
   await refreshWallet();
+  renderCart();
 }
 
 async function refreshWallet() {
@@ -321,12 +322,101 @@ async function runDecision() {
   });
 }
 
+// ---- weather cart: buy multiple regions in one checkout ----
+let CART = [];                              // [{id, name, kr}]
+const PPQ = { world: null, korea: null };  // pricePerQuery (KWT) per market
+const HKEY = "kw_purchases";
+
+async function loadPricing() {
+  try {
+    const w = new ethers.Contract(CFG.subscriptionManager, window.ABI.sm, provider);
+    const k = new ethers.Contract(CFG.koreaSubscriptionManager, window.ABI.sm, provider);
+    const [wp, kp] = await Promise.all([w.pricePerQuery(), k.pricePerQuery()]);
+    PPQ.world = Number(ethers.formatUnits(wp, 18)); PPQ.korea = Number(ethers.formatUnits(kp, 18));
+  } catch { /* non-fatal */ }
+  updateCartSummary();
+}
+function cartAdd(c) { if (!c || CART.some((x) => x.id === c.id)) return; CART.push({ id: c.id, name: c.name, kr: isDong(c.id) }); renderCart(); }
+function cartRemove(id) { CART = CART.filter((x) => x.id !== id); renderCart(); }
+function renderCart() {
+  const el = $("cartList");
+  if (!CART.length) el.textContent = t("장바구니가 비었습니다.", "Cart is empty.");
+  else {
+    el.innerHTML = CART.map((c) => `<div class="kv"><span class="k">${c.name} <span class="addr">${c.kr ? t("국내 동", "KR 동") : t("세계", "World")}</span></span><span class="v"><span class="rm" data-rm="${c.id}" style="cursor:pointer;color:var(--danger)">✕</span></span></div>`).join("");
+    el.querySelectorAll(".rm").forEach((b) => b.addEventListener("click", () => cartRemove(Number(b.dataset.rm))));
+  }
+  const btn = $("cartCheckoutBtn"); if (btn) btn.disabled = !CART.length || !account;
+  updateCartSummary();
+}
+function updateCartSummary() {
+  const box = $("cartSummary"); if (!box) return;
+  const nW = CART.filter((c) => !c.kr).length, nK = CART.filter((c) => c.kr).length;
+  let cost = "";
+  if (PPQ.world != null) { const c = Math.round((nW * PPQ.world + nK * PPQ.korea) * 100) / 100; cost = t(` · 예상 비용(종량제) ${c} KWT (구독 시 한도에서 차감)`, ` · est. ${c} KWT pay-per-query (or covered by subscription)`); }
+  box.innerHTML = t(`총 ${CART.length}개 지역 (세계 ${nW} · 국내 ${nK})${cost}`, `${CART.length} regions (World ${nW} · KR ${nK})${cost}`) + (CART.length && !account ? `<br><span class="warn">${t("결제하려면 지갑을 연결하세요.", "Connect a wallet to check out.")}</span>` : "");
+}
+function loadHistory() { try { return JSON.parse(localStorage.getItem(HKEY) || "[]"); } catch { return []; } }
+function pushHistory(rec) { const h = loadHistory(); h.push(rec); try { localStorage.setItem(HKEY, JSON.stringify(h.slice(-50))); } catch {} renderHistory(); }
+function renderHistory() {
+  const el = $("purchaseHistory"); if (!el) return; const h = loadHistory().slice().reverse();
+  if (!h.length) { el.textContent = t("아직 구매 내역이 없습니다.", "No purchases yet."); return; }
+  el.innerHTML = h.map((r) => `<div class="kv"><span class="k">${r.name} <span class="addr">${r.kr ? "KR" : "W"}</span></span><span class="v">${r.temp != null ? r.temp + "℃" : "—"} <span class="addr">${fmtShort(r.boughtAt)}</span> · <a class="ext" href="${txLink(r.tx)}" target="_blank">tx ↗</a></span></div>`).join("");
+}
+function wireCartSearch() {
+  const box = $("cartCity"), list = $("cartResults"); if (!box) return;
+  const matches = (q) => { q = q.trim().toLowerCase(); const hits = []; if (q) for (const c of CITIES) { if (c.name.toLowerCase().includes(q) || `${c.name}, ${c.cc}`.toLowerCase().includes(q)) { hits.push(c); if (hits.length >= 8) break; } } return hits; };
+  const render = (q) => {
+    const hits = matches(q);
+    list.innerHTML = hits.map((c) => `<div class="sres" data-id="${c.id}">${c.name} <span class="cc">${isDong(c.id) ? t("KR 동", "KR 동") : c.cc}</span></div>`).join("");
+    list.style.display = hits.length ? "block" : "none";
+    if (hits.length) { const rect = box.getBoundingClientRect(); const up = window.innerHeight - rect.bottom < list.scrollHeight + 24; list.style.top = up ? "auto" : (box.offsetHeight + 4) + "px"; list.style.bottom = up ? (box.offsetHeight + 4) + "px" : "auto"; }
+    list.querySelectorAll(".sres").forEach((el) => el.addEventListener("mousedown", (ev) => { ev.preventDefault(); cartAdd(CITY_BY_ID.get(Number(el.dataset.id))); box.value = ""; list.style.display = "none"; }));
+  };
+  box.addEventListener("input", () => render(box.value));
+  box.addEventListener("focus", () => box.value && render(box.value));
+  box.addEventListener("blur", () => setTimeout(() => (list.style.display = "none"), 150));
+  $("cartAddBtn").addEventListener("click", () => { const h = matches(box.value); if (h[0]) { cartAdd(h[0]); box.value = ""; list.style.display = "none"; } });
+}
+async function cartCheckout() {
+  if (!account || !CART.length) return;
+  await withBusy($("cartCheckoutBtn"), t("결제·조회 중…", "Processing…"), async () => {
+    const out = $("cartResult"); out.style.display = "block"; out.innerHTML = "";
+    let done = 0; const total = CART.length; const lines = [];
+    for (const item of [...CART]) {
+      const code = item.id;
+      try {
+        const roOracle = roOracleOf(code), oracle = oracleSignerOf(code);
+        if ((await roOracle.observationCount(code)) === 0n) {
+          const c = CITY_BY_ID.get(code);
+          const rj = await (await fetch(`/api/relay?id=${code}${c && !item.kr ? `&lat=${c.lat}&lon=${c.lon}` : ""}`)).json();
+          if (rj.error) throw new Error(rj.error);
+        }
+        const data = ctx(code).unscale(await oracle.queryLatest.staticCall(code));
+        const tx = await oracle.queryLatest(code); await tx.wait();
+        done++; CART = CART.filter((x) => x.id !== code);
+        lines.push(`<span class="ok">✓</span> ${item.name} — ${data.temperature.toFixed(1)}℃ · <a class="ext" href="${txLink(tx.hash)}" target="_blank">tx ↗</a>`);
+        pushHistory({ code, name: item.name, kr: item.kr, temp: data.temperature.toFixed(1), tx: tx.hash, boughtAt: Math.floor(Date.now() / 1000) });
+      } catch (e) {
+        const msg = String((e && (e.shortMessage || e.message)) || e);
+        lines.push(`<span class="bad">✕</span> ${item.name} — ${/quota|prepaid|allowance|exceed|insufficient|access/i.test(msg) ? t("구독 또는 선불 예치 필요", "needs subscription or prepaid") : msg.slice(0, 70)}`);
+      }
+      out.innerHTML = lines.join("<br>");
+    }
+    out.innerHTML = `<b>${t(`${done}/${total}개 구매 완료`, `${done}/${total} purchased`)}</b><br>` + lines.join("<br>");
+    renderCart(); await refreshWallet(); refreshStatus();
+  });
+}
+
 function main() {
   $("regionSel").innerHTML = FEATURED.map((c) => `<option value="${c.id}">${c.name}, ${c.cc}</option>`).join("");
   wireDappSearch();
   wireDecisionSearch();
+  wireCartSearch();
+  renderCart(); renderHistory();
   loadDecisionProducts();
   $("decBtn")?.addEventListener("click", runDecision);
+  $("cartCheckoutBtn")?.addEventListener("click", cartCheckout);
+  $("cartClearBtn")?.addEventListener("click", () => { CART = []; renderCart(); $("cartResult").style.display = "none"; });
   if (!CFG) { notDeployed(); return; }
   const applyChrome = () => {
     $("netBadge").textContent = `${CFG.chainName} · ${t("실제 온체인", "live on-chain")}`;
@@ -335,8 +425,9 @@ function main() {
   applyChrome();
   if ($("footChain")) $("footChain").textContent = CFG.chainName;
   if ($("footCurrency")) $("footCurrency").textContent = CFG.currency || "tBNB";
-  if (window.KW) window.KW.onLang(() => { applyChrome(); refreshStatus(); if (account) refreshWallet(); });
+  if (window.KW) window.KW.onLang(() => { applyChrome(); refreshStatus(); renderCart(); renderHistory(); if (account) refreshWallet(); });
   initReadOnly();
+  loadPricing();
   $("connectBtn").addEventListener("click", connect);
   $("faucetBtn").addEventListener("click", faucet);
   $("subBtn").addEventListener("click", subscribe);

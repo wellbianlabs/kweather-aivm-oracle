@@ -59,6 +59,7 @@
       <div class="brand"><span class="brand-mark"><svg viewBox="0 0 24 24"><use href="#i-globe"/></svg></span><span class="brand-text">KWeather <span class="x">×</span> AIVM <span class="brand-sub">dApp</span></span></div>
       <nav class="nav-links">
         <a href="/" data-en="Live demo">라이브 데모</a>
+        <a href="/admin" data-en="Admin">관리자</a>
         <a id="oracleLink" class="ext" href="#" target="_blank" data-en="Oracle contract ↗">오라클 컨트랙트 ↗</a>
         <button id="connectBtn" class="btn" data-en="Connect wallet">지갑 연결</button>
         <button id="langBtn" class="lang-btn" type="button">EN</button>
@@ -78,6 +79,21 @@
       <h3><svg viewBox="0 0 24 24"><use href="#i-cast"/></svg> <span data-en="Deployment status">배포 상태</span></h3>
       <div id="statusBody">…</div>
     </div>
+
+    <!-- how-to guide -->
+    <details class="panel" id="guidePanel" style="margin-bottom:16px">
+      <summary style="cursor:pointer;font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px"><svg viewBox="0 0 24 24" style="width:18px;height:18px;color:var(--brand)"><use href="#i-card"/></svg> <span data-en="How to subscribe &amp; pay — with a real example">구독·결제 방법 — 실제 사례로 보기</span></summary>
+      <div style="margin-top:14px;font-size:13px;line-height:1.7;color:var(--muted)">
+        <p data-en-html="<b>Example</b> — a cold-chain logistics firm wants to monitor weather for Seoul, Busan and Incheon every day."><b>예시</b> — 콜드체인 물류사가 매일 서울·부산·인천 3개 지역의 날씨를 모니터링하려 합니다.</p>
+        <ol style="margin:8px 0 0;padding-left:18px">
+          <li data-en-html="Connect a wallet → <b>Get KWT</b> (test settlement token).">지갑 연결 → <b>KWT 받기</b>(테스트 결제 토큰)</li>
+          <li data-en-html="Pick a plan: <b>Subscription</b> (100 KWT/mo, 1,000-query monthly allowance) or <b>Pay-per-query</b> (prepay, 1 KWT debited per read).">결제 방식 선택: <b>구독</b>(월 100 KWT · 월 1,000 쿼리 한도) 또는 <b>종량제</b>(선불 예치 후 호출당 1 KWT 차감)</li>
+          <li data-en-html="Search a region → <b>Publish &amp; paid query</b>. If it isn't on-chain yet, the relayer publishes it, then a metered <span class='mono'>queryLatest</span> pays &amp; reads it.">조회할 지역 검색 → <b>온체인 발행 &amp; 결제 조회</b>(없으면 자동 발행 후 미터링 <span class="mono">queryLatest</span>로 결제·조회)</li>
+          <li data-en-html="To buy several regions at once, add them to the <b>Weather cart</b> below and check out together.">여러 지역을 한 번에 사려면 아래 <b>날씨 장바구니</b>에 담아 일괄 결제하세요</li>
+        </ol>
+        <p style="margin-top:10px" data-en="Korea (dong-level) and World use separate oracles/subscriptions, so you subscribe/prepay per market. Decision products (energy, logistics, insurance…) are computed from the on-chain data.">국내(동단위)와 세계는 오라클·구독이 분리되어 있어 시장별로 각각 구독/선불합니다. 의사결정 상품(에너지·물류·보험 등)은 온체인 데이터를 읽어 산출됩니다.</p>
+      </div>
+    </details>
 
     <div class="card-grid">
       <!-- wallet -->
@@ -129,6 +145,29 @@
       </div>
     </div>
 
+    <!-- weather cart (buy multiple regions at once) -->
+    <div class="panel" id="cartPanel" style="margin-top:16px">
+      <h3><svg viewBox="0 0 24 24"><use href="#i-card"/></svg> <span data-en="Weather cart — buy multiple regions at once">날씨 장바구니 — 여러 지역 한 번에 구매</span></h3>
+      <div class="hint" data-en="Add several cities/동, then check out together: each is published on-chain if needed and read via a metered queryLatest (debited from your subscription quota or prepaid).">여러 도시/동을 담고 한 번에 결제하세요 — 각 지역은 필요 시 온체인 발행 후 미터링 <span class="mono">queryLatest</span>로 조회됩니다(구독 한도 또는 선불에서 차감).</div>
+      <div class="btn-row" style="margin:10px 0;gap:8px">
+        <span style="position:relative;display:inline-block;min-width:240px">
+          <input id="cartCity" type="text" placeholder="도시/동 검색 후 담기" data-en-ph="Search a city/동 to add" autocomplete="off" style="width:100%" />
+          <div id="cartResults" class="search-results" style="left:0;right:0;top:42px"></div>
+        </span>
+        <button id="cartAddBtn" class="btn ghost" data-en="Add">담기</button>
+      </div>
+      <div id="cartList" class="log" style="max-height:170px" data-en="Cart is empty.">장바구니가 비었습니다.</div>
+      <div id="cartSummary" class="hint" style="margin:10px 0"></div>
+      <div class="btn-row">
+        <button id="cartCheckoutBtn" class="btn" disabled data-en="Checkout — pay &amp; read all">일괄 결제·조회</button>
+        <button id="cartClearBtn" class="btn ghost" data-en="Clear">비우기</button>
+      </div>
+      <div id="cartResult" class="log" style="margin-top:12px;display:none"></div>
+      <hr style="border-color:var(--line);margin:16px 0 12px">
+      <h3 style="font-size:13.5px"><svg viewBox="0 0 24 24"><use href="#i-wallet"/></svg> <span data-en="My dashboard — purchase history">내 대시보드 — 구매 내역</span></h3>
+      <div id="purchaseHistory" class="log" style="max-height:170px" data-en="No purchases yet.">아직 구매 내역이 없습니다.</div>
+    </div>
+
     <!-- decision products -->
     <div class="panel" style="margin-top:16px">
       <h3><svg viewBox="0 0 24 24"><use href="#i-brain"/></svg> <span data-en="On-chain decision products">온체인 의사결정 상품</span></h3>
@@ -157,6 +196,6 @@
   <script src="korea-cities.js"></script>
   <script src="featured.js"></script>
   <script src="i18n.js"></script>
-  <script src="dapp.js?v=3"></script>
+  <script src="dapp.js?v=4"></script>
 </body>
 </html>
