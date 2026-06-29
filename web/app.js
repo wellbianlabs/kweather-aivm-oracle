@@ -57,6 +57,10 @@ const mockSeries = (city) => Array.from({ length: 24 }, (_, h) => mockHour(city,
 // i18n helper for dynamic strings (re-renders on toggle via KW.onLang below)
 const t = (ko, en) => (window.KW ? window.KW.t(ko, en) : ko);
 
+// times render in the visitor's local time zone (auto-detected from browser/OS by country)
+const VISITOR_TZ = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { return ""; } })();
+const tzAbbr = (u) => { try { const p = new Intl.DateTimeFormat(undefined, { timeZoneName: "short" }).formatToParts(new Date(u * 1000)); return (p.find((x) => x.type === "timeZoneName") || {}).value || ""; } catch { return ""; } };
+
 // ---- data store ----
 const DATA = { source: "…", real: false, byId: {} };
 let WORKING = FEATURED.slice();
@@ -184,7 +188,7 @@ function renderCities() {
 function renderStruct() {
   const c = selCity();
   const o = obsAt(c, IDX);
-  document.getElementById("structRegion").textContent = `${cityLabel(c)} @ ${labelAt(c, IDX)}`;
+  document.getElementById("structRegion").textContent = `${cityLabel(c)} @ ${labelAt(c, IDX)}${DATA.real ? " " + tzAbbr(o.time) : ""}`;
   const line = (ty, nm, vl, cm) => `    <span class="ty">${ty}</span> <span class="nm">${nm}</span> = <span class="vl">${vl}</span>; <span class="cm">// ${cm}</span>`;
   const st = o.senseTemp ?? o.temperature;
   document.getElementById("structCode").innerHTML =

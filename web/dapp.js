@@ -24,6 +24,13 @@ let roWorldOracle;   // for the 세계 status panel
 const $ = (id) => document.getElementById(id);
 const fmt = (wei) => Number(ethers.formatUnits(wei, 18)).toLocaleString(undefined, { maximumFractionDigits: 2 });
 const short = (a) => a.slice(0, 6) + "…" + a.slice(-4);
+
+// ---- time: always render in the visitor's local time zone (auto-detected from browser/OS by country) ----
+const VISITOR_TZ = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { return ""; } })();
+const VISITOR_LOCALE = (typeof navigator !== "undefined" && navigator.language) || "en";
+const fmtFull = (u) => new Intl.DateTimeFormat(VISITOR_LOCALE, { dateStyle: "medium", timeStyle: "short" }).format(new Date(u * 1000));
+const fmtShort = (u) => new Intl.DateTimeFormat(VISITOR_LOCALE, { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(u * 1000));
+const tzAbbr = (u) => { try { const p = new Intl.DateTimeFormat(VISITOR_LOCALE, { timeZoneName: "short" }).formatToParts(new Date(u * 1000)); return (p.find((x) => x.type === "timeZoneName") || {}).value || ""; } catch { return ""; } };
 const txLink = (h) => `${CFG.explorer}/tx/${h}`;
 const addrLink = (a) => `${CFG.explorer}/address/${a}`;
 const curCode = () => Number($("regionSel").value);
@@ -82,7 +89,7 @@ async function refreshStatus() {
         const cnt = await roWorldOracle.observationCount(code);
         let temp = "—", ts = 0;
         if (cnt > 0n) { const d = unscale(await roWorldOracle.peekLatest(code)); temp = d.temperature.toFixed(1) + "℃"; ts = d.timestamp; }
-        const when = ts ? new Date(ts * 1000).toLocaleString(t("ko-KR", "en-US"), { hour: "2-digit", minute: "2-digit", month: "numeric", day: "numeric" }) : t("데이터 없음", "no data");
+        const when = ts ? fmtShort(ts) : t("데이터 없음", "no data");
         return `<div class="kv"><span class="k">${cityName(code)} <span class="addr">#${cnt}</span></span><span class="v">${temp} <span class="addr">${when}</span></span></div>`;
       })
     );
@@ -91,7 +98,7 @@ async function refreshStatus() {
       `<div class="kv"><span class="k">${t("국내 동단위 오라클", "Korea 동 oracle")}</span><span class="v"><a class="ext" href="${addrLink(CFG.koreaOracle)}" target="_blank">${short(CFG.koreaOracle)} ↗</a></span></div>` +
       `<div class="kv"><span class="k">${t("KWT 토큰", "KWT token")}</span><span class="v"><a class="ext" href="${addrLink(CFG.token)}" target="_blank">${short(CFG.token)} ↗</a></span></div>` +
       `<hr style="border-color:var(--line);margin:10px 0">` +
-      `<div class="hint" style="margin-bottom:6px">${t(`세계 오라클 최신 ${regions.length}개 지역 (국내 동은 검색→조회)`, `Latest ${regions.length} world-oracle regions (search to query a Korea 동)`)}</div>` +
+      `<div class="hint" style="margin-bottom:6px">${t(`세계 오라클 최신 ${regions.length}개 지역 (국내 동은 검색→조회) · 🕐 모든 시각은 접속 지역 시간대(${VISITOR_TZ})로 표시`, `Latest ${regions.length} world-oracle regions (search to query a Korea 동) · 🕐 all times shown in your local time zone (${VISITOR_TZ})`)}</div>` +
       (rows.length ? rows.join("") : `<div class="kv"><span class="k">${t("온체인 데이터", "On-chain data")}</span><span class="v warn">${t("릴레이어 대기 중", "awaiting relayer")}</span></div>`);
   } catch (e) {
     $("statusBody").innerHTML = `<span class="bad">${t("상태 조회 실패:", "Status query failed:")}</span> ${e.message}`;
@@ -167,7 +174,7 @@ async function prepay() {
 }
 
 function renderWeather(code, d, extra) {
-  const head = `[${cityName(code)}] @ ${new Date(d.timestamp * 1000).toLocaleString(t("ko-KR", "en-US"))}\n` +
+  const head = `[${cityName(code)}] @ ${fmtFull(d.timestamp)} ${tzAbbr(d.timestamp)}\n` +
     t(`기온 ${d.temperature.toFixed(1)}℃ (체감 ${d.senseTemp.toFixed(1)}℃) · 습도 ${d.humidity}%\n풍속 ${d.windSpeed}m/s · 풍향 ${d.windDirection}° · 강수 ${d.precipitation}mm\n`,
       `Temp ${d.temperature.toFixed(1)}℃ (feels ${d.senseTemp.toFixed(1)}℃) · Humidity ${d.humidity}%\nWind ${d.windSpeed}m/s · Dir ${d.windDirection}° · Precip ${d.precipitation}mm\n`);
   const extraLine = isDong(code)
