@@ -96,7 +96,7 @@ User=$RUN_USER
 [Install]
 WantedBy=multi-user.target
 EOF
-systemctl daemon-reload; systemctl enable --now $SVC; sleep 2
+systemctl daemon-reload; systemctl enable "$SVC" >/dev/null 2>&1 || true; systemctl restart "$SVC"; sleep 2
 curl -fsS "http://127.0.0.1:$PORT/api/quote" >/dev/null && ok "앱 구동 OK (127.0.0.1:$PORT)" \
   || { warn "앱 응답 없음 — 로그: journalctl -u $SVC -n 50"; exit 1; }
 
