@@ -23,6 +23,11 @@
     .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
     .btn.ghost { background: transparent; color: var(--text); border: 1px solid var(--line); }
     .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+    .search-results { display: none; position: absolute; z-index: 60; left: 0; right: 0; background: #0e1730; border: 1px solid var(--line); border-radius: 10px; max-height: 300px; overflow-y: auto; box-shadow: 0 16px 40px rgba(0,0,0,.5); }
+    .search-results .sres { padding: 9px 12px; font-size: 13px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 12px; border-bottom: 1px solid rgba(120,150,210,.1); white-space: nowrap; }
+    .search-results .sres:last-child { border-bottom: none; }
+    .search-results .sres:hover { background: rgba(56,189,248,.14); }
+    .search-results .cc { color: var(--muted); font-size: 11px; flex: none; }
     select, input { background: #0a1120; color: var(--text); border: 1px solid var(--line); border-radius: 9px; padding: 9px 12px; font-size: 13px; font-family: inherit; }
     .mono { font-family: var(--mono); }
     a.ext { color: var(--brand); text-decoration: none; }
@@ -152,6 +157,6 @@
   <script src="korea-cities.js"></script>
   <script src="featured.js"></script>
   <script src="i18n.js"></script>
-  <script src="dapp.js"></script>
+  <script src="dapp.js?v=2"></script>
 </body>
 </html>

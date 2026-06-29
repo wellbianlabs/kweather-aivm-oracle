@@ -276,10 +276,16 @@ function wireDecisionSearch() {
     if (!q) { list.style.display = "none"; return; }
     const hits = [];
     for (const c of CITIES) {
-      if (c.name.toLowerCase().includes(q) || `${c.name}, ${c.cc}`.toLowerCase().includes(q)) { hits.push(c); if (hits.length >= 12) break; }
+      if (c.name.toLowerCase().includes(q) || `${c.name}, ${c.cc}`.toLowerCase().includes(q)) { hits.push(c); if (hits.length >= 8) break; }
     }
     list.innerHTML = hits.map((c) => `<div class="sres" data-id="${c.id}">${c.name} <span class="cc">${isDong(c.id) ? t("KR 동", "KR 동") : c.cc}</span></div>`).join("");
     list.style.display = hits.length ? "block" : "none";
+    if (hits.length) { // open upward when there isn't room below (panel sits near page bottom)
+      const rect = box.getBoundingClientRect();
+      const up = window.innerHeight - rect.bottom < list.scrollHeight + 24;
+      list.style.top = up ? "auto" : (box.offsetHeight + 4) + "px";
+      list.style.bottom = up ? (box.offsetHeight + 4) + "px" : "auto";
+    }
     list.querySelectorAll(".sres").forEach((el) => el.addEventListener("mousedown", (ev) => {
       ev.preventDefault();
       const c = CITY_BY_ID.get(Number(el.dataset.id));
