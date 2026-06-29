@@ -68,7 +68,9 @@ if [ "$need_keys" -eq 1 ]; then
   case "$AGENT_PRIVATE_KEY"   in 0x*) ;; *) warn "에이전트 키가 0x로 시작하지 않습니다 (계속 진행)";; esac
 
   # 기본값(.env.example)에서 키 3줄만 제거하고 실제 값을 깨끗하게 추가 (escape 이슈 없음)
-  grep -vE '^(KWEATHER_API_KEY|RELAYER_PRIVATE_KEY|AGENT_PRIVATE_KEY)=' "$APP_DIR/.env.example" > "$APP_DIR/.env"
+  # systemd EnvironmentFile은 인라인 주석을 값으로 취급하므로 ' #...' 꼬리주석을 방어적으로 제거
+  grep -vE '^(KWEATHER_API_KEY|RELAYER_PRIVATE_KEY|AGENT_PRIVATE_KEY)=' "$APP_DIR/.env.example" \
+    | sed -E 's/[[:space:]]+#.*$//' > "$APP_DIR/.env"
   {
     echo "KWEATHER_API_KEY=$KWEATHER_API_KEY"
     echo "RELAYER_PRIVATE_KEY=$RELAYER_PRIVATE_KEY"
