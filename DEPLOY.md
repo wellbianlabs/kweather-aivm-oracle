@@ -1,7 +1,7 @@
-# 자체 서버 이관 가이드 — `agent.kweather.co.kr`
+# 배포 가이드 — `agent.kweather.co.kr`
 
-K-Weather 자체 서버에서 이 플랫폼(웹 + API)을 **Vercel 없이 독립 구동**하는 방법입니다.
-스마트컨트랙트(오라클/구독)는 BNB Smart Chain에 이미 배포되어 있으므로 **이관 대상은 웹+API 레이어뿐**입니다.
+케이웨더 자체 서버에서 이 플랫폼(웹 + API)을 **독립 구동**하는 방법입니다.
+스마트컨트랙트(오라클/구독)는 BNB Smart Chain에 이미 배포되어 있어 **웹+API 레이어만 서버에서 구동**합니다.
 
 ```
 [인터넷] → agent.kweather.co.kr (DNS A 레코드) → nginx(443, TLS) → Node 서버 server.js(8080)
@@ -83,8 +83,8 @@ sudo nginx -t && sudo systemctl reload nginx
 sudo certbot --nginx -d agent.kweather.co.kr     # Let's Encrypt TLS 자동 발급/갱신
 ```
 
-## 6) 정기 작업 (Vercel cron 대체)
-Vercel에서는 `/api/relay`(매시 정각)·`/api/agent`(매시 30분)를 크론으로 호출했습니다. 자체 서버에서는:
+## 6) 정기 작업 (크론)
+`/api/relay`(매시 정각, 날씨 발행)·`/api/agent`(매시 30분, 자율 에이전트)를 주기 실행합니다:
 - 간편: `.env`에 `ENABLE_CRON=true` (server.js 내장 스케줄러, 시간당 실행), 또는
 - 표준: 시스템 crontab —
 ```cron

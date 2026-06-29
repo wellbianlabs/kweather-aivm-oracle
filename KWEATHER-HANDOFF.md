@@ -1,10 +1,10 @@
-# 케이웨더 팀 준비물 — `agent.kweather.co.kr` 자체 서버 이관
+# 케이웨더 팀 준비물 — `agent.kweather.co.kr` 자체 서버 운영
 
 이 플랫폼(웹 대시보드 + dApp + API)을 **케이웨더 자체 서버에서 `agent.kweather.co.kr` 도메인으로 독립 운영**하기
 위해 케이웨더 팀이 준비/실행해야 할 항목입니다. 기술 상세 절차는 **[DEPLOY.md](DEPLOY.md)** 참고.
 
 > 스마트컨트랙트(오라클·구독)는 BNB Smart Chain에 이미 배포되어 있어 **재배포 불필요**합니다.
-> 이관 대상은 **웹+API 레이어뿐**이며 `node server.js` 단일 프로세스로 구동됩니다.
+> 서버에서 구동하는 대상은 **웹+API 레이어뿐**이며 `node server.js` 단일 프로세스로 동작합니다.
 
 ---
 
