@@ -407,13 +407,81 @@ async function cartCheckout() {
   });
 }
 
+// ---- agent market: shop a region (weather data) + an autonomous agent → buy the service ----
+let MKT = []; let mktCode = 1642911, mktLabel = "Jakarta, ID";
+async function loadMarket() {
+  try {
+    const j = await (await fetch("/api/decision")).json();
+    MKT = j.products || [];
+    const sel = $("mktSector");
+    if (sel && sel.options.length <= 1) [...new Set(MKT.map((p) => p.sector))].sort().forEach((s) => sel.add(new Option(s, s)));
+    sel?.addEventListener("change", renderMarket);
+    renderMarket();
+  } catch { const g = $("mktGrid"); if (g) g.innerHTML = `<div class="hint">${t("마켓을 불러오지 못했습니다.", "Failed to load market.")}</div>`; }
+}
+function renderMarket() {
+  const grid = $("mktGrid"); if (!grid) return;
+  const f = $("mktSector") ? $("mktSector").value : "";
+  grid.innerHTML = MKT.filter((p) => !f || p.sector === f).map((p) => `
+    <div class="mkt-card">
+      <div class="mkt-top"><span class="mkt-emoji">${p.emoji || "📊"}</span><div><div class="mkt-name">${p.name}</div><div class="mkt-role">${p.role || ""}${p.cadence ? " · " + p.cadence : ""}</div></div></div>
+      <div class="mkt-sector">${p.sector}</div>
+      <div class="mkt-act">${t("자율액션", "Acts")}: ${p.action || "—"}</div>
+      <div class="mkt-btns"><button class="btn ghost mkt-prev" data-id="${p.id}">${t("미리보기", "Preview")}</button><button class="btn mkt-run" data-id="${p.id}">${t("구동·구매", "Run &amp; buy")}</button></div>
+      <div class="mkt-out" id="mkt-out-${p.id}"></div>
+    </div>`).join("");
+  grid.querySelectorAll(".mkt-prev").forEach((b) => b.addEventListener("click", () => mktPreview(b.dataset.id)));
+  grid.querySelectorAll(".mkt-run").forEach((b) => b.addEventListener("click", () => mktRun(b.dataset.id, b)));
+}
+function mktOut(id) { const el = $("mkt-out-" + id); if (el) el.style.display = "block"; return el; }
+async function mktPreview(id) {
+  const out = mktOut(id); if (!out) return; out.textContent = t("조회 중…", "Reading…");
+  try {
+    const j = await (await fetch(`/api/decision?city=${mktCode}&product=${id}`)).json();
+    const d = (j.decisions || [])[0]; if (!d) { out.textContent = j.error || "no data"; return; }
+    out.innerHTML = `${mktLabel} · ${j.onchain ? t("온체인", "on-chain") : j.source}<br>→ <b>${d.signal}</b> (${Math.round(d.score * 100)}%) · ${d.action}<br>${t("신뢰도", "conf")} ${Math.round((d.confidence || 0) * 100)}% · ${t("추세", "trend")} ${d.trend ? d.trend.dir : "-"}<br>${d.rationale || ""}`;
+  } catch (e) { out.textContent = String(e.message || e); }
+}
+async function mktRun(id, btn) {
+  const out = mktOut(id); if (!out) return;
+  const old = btn.textContent; btn.disabled = true; btn.textContent = t("구동 중…", "Running…");
+  out.textContent = t("에이전트 봇이 구독·결제·온체인 조회 중…", "Agent bot subscribing, paying & querying on-chain…");
+  try {
+    const j = await (await fetch(`/api/agent?product=${id}&city=${mktCode}`)).json();
+    if (j.error) { out.textContent = t("에러: ", "Error: ") + j.error; return; }
+    const d = j.decisionDetail || {};
+    let html = `${j.region} · ${t("표본", "samples")} ${j.samples}h<br>→ <b>${d.signal || "-"}</b> (${Math.round((d.score || 0) * 100)}%) · ${j.decision}<br>${t("신뢰도", "conf")} ${Math.round((d.confidence || 0) * 100)}% · ${t("추세", "trend")} ${d.trend ? d.trend.dir : "-"}<br>${d.rationale || ""}`;
+    if (j.paidThisRun) html += `<br><span class="ok">${t("결제: 구독 1개월", "Paid: 1-mo sub")}</span> <a class="ext" href="${txLink(j.paidThisRun.txHash)}" target="_blank">tx↗</a>`;
+    if (j.queryTxHash) html += `<br><span class="ok">${t("온체인 쿼리", "query")}</span> <a class="ext" href="${txLink(j.queryTxHash)}" target="_blank">tx↗</a> · ${t("잔여한도", "left")} ${j.quotaRemaining}`;
+    out.innerHTML = html;
+  } catch (e) { out.textContent = String(e.message || e); }
+  finally { btn.disabled = false; btn.textContent = old; }
+}
+function wireMarketSearch() {
+  const box = $("mktCity"), list = $("mktResults"); if (!box) return;
+  const matches = (q) => { q = q.trim().toLowerCase(); const h = []; if (q) for (const c of CITIES) { if (c.name.toLowerCase().includes(q) || `${c.name}, ${c.cc}`.toLowerCase().includes(q)) { h.push(c); if (h.length >= 8) break; } } return h; };
+  const pick = (c) => { mktCode = c.id; mktLabel = isDong(c.id) ? c.name + " (KR)" : `${c.name}, ${c.cc}`; box.value = isDong(c.id) ? c.name : `${c.name}, ${c.cc}`; list.style.display = "none"; };
+  const render = (q) => {
+    const hits = matches(q);
+    list.innerHTML = hits.map((c) => `<div class="sres" data-id="${c.id}">${c.name} <span class="cc">${isDong(c.id) ? t("KR 동", "KR 동") : c.cc}</span></div>`).join("");
+    list.style.display = hits.length ? "block" : "none";
+    if (hits.length) { const r = box.getBoundingClientRect(); const up = window.innerHeight - r.bottom < list.scrollHeight + 24; list.style.top = up ? "auto" : (box.offsetHeight + 4) + "px"; list.style.bottom = up ? (box.offsetHeight + 4) + "px" : "auto"; }
+    list.querySelectorAll(".sres").forEach((el) => el.addEventListener("mousedown", (ev) => { ev.preventDefault(); pick(CITY_BY_ID.get(Number(el.dataset.id))); }));
+  };
+  box.addEventListener("input", () => render(box.value));
+  box.addEventListener("focus", () => box.value && render(box.value));
+  box.addEventListener("blur", () => setTimeout(() => (list.style.display = "none"), 150));
+}
+
 function main() {
   $("regionSel").innerHTML = FEATURED.map((c) => `<option value="${c.id}">${c.name}, ${c.cc}</option>`).join("");
   wireDappSearch();
   wireDecisionSearch();
   wireCartSearch();
+  wireMarketSearch();
   renderCart(); renderHistory();
   loadDecisionProducts();
+  loadMarket();
   $("decBtn")?.addEventListener("click", runDecision);
   $("cartCheckoutBtn")?.addEventListener("click", cartCheckout);
   $("cartClearBtn")?.addEventListener("click", () => { CART = []; renderCart(); $("cartResult").style.display = "none"; });
@@ -425,7 +493,7 @@ function main() {
   applyChrome();
   if ($("footChain")) $("footChain").textContent = CFG.chainName;
   if ($("footCurrency")) $("footCurrency").textContent = CFG.currency || "tBNB";
-  if (window.KW) window.KW.onLang(() => { applyChrome(); refreshStatus(); renderCart(); renderHistory(); if (account) refreshWallet(); });
+  if (window.KW) window.KW.onLang(() => { applyChrome(); refreshStatus(); renderCart(); renderHistory(); renderMarket(); if (account) refreshWallet(); });
   initReadOnly();
   loadPricing();
   $("connectBtn").addEventListener("click", connect);

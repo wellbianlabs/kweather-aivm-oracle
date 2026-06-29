@@ -28,6 +28,19 @@
     .search-results .sres:last-child { border-bottom: none; }
     .search-results .sres:hover { background: rgba(56,189,248,.14); }
     .search-results .cc { color: var(--muted); font-size: 11px; flex: none; }
+    .market-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 12px; }
+    .mkt-card { background: #0c1426; border: 1px solid var(--line); border-radius: 13px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+    .mkt-top { display: flex; align-items: flex-start; gap: 9px; }
+    .mkt-emoji { font-size: 20px; line-height: 1; }
+    .mkt-name { font-weight: 700; font-size: 13px; }
+    .mkt-role { font-size: 11.5px; color: var(--muted); margin-top: 1px; }
+    .mkt-sector { font-size: 10.5px; color: var(--brand-2); font-family: var(--mono); }
+    .mkt-act { font-size: 11.5px; color: var(--muted); line-height: 1.45; min-height: 32px; }
+    .mkt-btns { display: flex; gap: 7px; margin-top: auto; }
+    .mkt-btns .btn { padding: 7px 10px; font-size: 12px; flex: 1; }
+    .mkt-out { font-family: var(--mono); font-size: 11.5px; color: #cdd8ee; white-space: pre-wrap; line-height: 1.55; border-top: 1px solid var(--line); padding-top: 8px; display: none; }
+    @media (max-width: 900px) { .market-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 560px) { .market-grid { grid-template-columns: 1fr; } }
     select, input { background: #0a1120; color: var(--text); border: 1px solid var(--line); border-radius: 9px; padding: 9px 12px; font-size: 13px; font-family: inherit; }
     .mono { font-family: var(--mono); }
     a.ext { color: var(--brand); text-decoration: none; }
@@ -168,10 +181,25 @@
       <div id="purchaseHistory" class="log" style="max-height:170px" data-en="No purchases yet.">아직 구매 내역이 없습니다.</div>
     </div>
 
-    <!-- decision products -->
+    <!-- agent market: shop weather data + an autonomous agent -->
+    <div class="panel" id="marketPanel" style="margin-top:16px">
+      <h3><svg viewBox="0 0 24 24"><use href="#i-brain"/></svg> <span data-en="Agent market — weather data + autonomous agents">에이전트 마켓 — 날씨 데이터 + 자율 에이전트</span></h3>
+      <div class="hint" data-en="① Pick a region (the weather data) → ② pick an autonomous agent → ③ Run &amp; buy: the agent bot subscribes, pays and runs a metered on-chain query, then executes its algorithm (perceive 24h series → trend &amp; analysis → decision with confidence). Preview is free.">① 지역(날씨 데이터) 선택 → ② 자율 에이전트 선택 → ③ <b>구동·구매</b>: 에이전트 봇이 온체인에서 구독·결제·미터링 조회 후 알고리즘(24h 시계열 인지 → 추세·분석 → 신뢰도 포함 의사결정)을 실행합니다. 미리보기는 무료.</div>
+      <div class="btn-row" style="margin:10px 0;gap:8px;align-items:center">
+        <span style="font-size:12.5px;color:var(--muted)" data-en="Region:">지역:</span>
+        <span style="position:relative;display:inline-block;min-width:240px">
+          <input id="mktCity" type="text" placeholder="도시/동 검색 (날씨 데이터)" data-en-ph="Search city/동 (weather data)" value="Jakarta" autocomplete="off" style="width:100%" />
+          <div id="mktResults" class="search-results" style="left:0;right:0;top:42px"></div>
+        </span>
+        <select id="mktSector"><option value="" data-en="All sectors">전체 분야</option></select>
+      </div>
+      <div id="mktGrid" class="market-grid"></div>
+    </div>
+
+    <!-- quick free preview -->
     <div class="panel" style="margin-top:16px">
-      <h3><svg viewBox="0 0 24 24"><use href="#i-brain"/></svg> <span data-en="On-chain decision products">온체인 의사결정 상품</span></h3>
-      <div class="hint" data-en="Turn on-chain weather into domain decisions — energy, agriculture, insurance, logistics, safety, tourism. Decisions read on-chain data; feed consumption settles via metered query / x402.">오라클의 <b>온체인 날씨</b>로 도메인별 의사결정을 산출합니다 — 에너지·농업·보험·물류·안전·관광. 결정은 온체인 데이터 기반이며, 피드 소비는 미터링 쿼리/x402로 결제됩니다.</div>
+      <h3><svg viewBox="0 0 24 24"><use href="#i-search"/></svg> <span data-en="Quick decision preview (free)">빠른 의사결정 미리보기 (무료)</span></h3>
+      <div class="hint" data-en="Run any agent on-chain read for free (no payment / metering) — signal, action, confidence and trend.">아무 에이전트나 온체인 데이터로 무료 실행합니다(결제·미터링 없음) — 신호·조치·신뢰도·추세.</div>
       <div class="btn-row" style="margin:10px 0;flex-wrap:wrap;gap:8px">
         <select id="decProduct"><option value="" data-en="All products">전체 상품</option></select>
         <span style="position:relative;display:inline-block;min-width:240px">
@@ -196,6 +224,6 @@
   <script src="korea-cities.js"></script>
   <script src="featured.js"></script>
   <script src="i18n.js"></script>
-  <script src="dapp.js?v=4"></script>
+  <script src="dapp.js?v=5"></script>
 </body>
 </html>
