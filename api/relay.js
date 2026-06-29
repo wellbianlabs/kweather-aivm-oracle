@@ -7,6 +7,8 @@
 
 const { ethers } = require("ethers");
 const { scaleObs } = require("../lib/world-scale");
+// catalog lookup so ?id=<world id> alone resolves its coordinates
+const worldById = new Map(require("../lib/cities.json").map((c) => [String(c[0]), c]));
 
 // Featured global cities (GeoNames id = on-chain code). `wc` = K-Weather world city code;
 // the /api/weather feed also auto-resolves it from the GeoNames id (lib/worldcodes.json).
@@ -41,10 +43,24 @@ module.exports = async (req, res) => {
     if (!RELAYER_PRIVATE_KEY || !ORACLE_ADDRESS) {
       return res.status(503).json({ error: "relayer not configured (set RELAYER_PRIVATE_KEY, ORACLE_ADDRESS)" });
     }
-    // On-demand: publish a single arbitrary city (?id=&lat=&lon=). Else the featured set.
+    // On-demand single city: ?id=<world id | 10-digit 법정동> (lat/lon optional — resolved
+    // from the catalog for world ids). Else the featured set.
     const qid = req.query.id, qlat = req.query.lat, qlon = req.query.lon;
-    const single = qid && qlat && qlon;
-    const targets = single ? [{ code: Number(qid), lat: Number(qlat), lon: Number(qlon) }] : FEATURED;
+    let target = null;
+    if (qid) {
+      const id = String(qid).trim();
+      if (/^\d{10}$/.test(id)) {
+        target = { code: Number(id) };                                   // Korea: domestic feed needs code only
+      } else if (qlat && qlon) {
+        target = { code: Number(id), lat: Number(qlat), lon: Number(qlon) };
+      } else {
+        const c = worldById.get(id);
+        if (!c) return res.status(404).json({ error: `unknown city id ${id} — pass &lat=&lon=` });
+        target = { code: Number(id), lat: c[3], lon: c[4] };
+      }
+    }
+    const single = !!target;
+    const targets = single ? [target] : FEATURED;
 
     const now = Date.now();
     if (!single && now - _last < 60_000) {

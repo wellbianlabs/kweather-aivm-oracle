@@ -125,11 +125,16 @@ command -v certbot >/dev/null 2>&1 || apt-get install -y certbot python3-certbot
 certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos -m "$EMAIL" --redirect \
   && ok "HTTPS 적용" || warn "certbot 실패 — 수동: certbot --nginx -d $DOMAIN"
 
-# ── 7) 크론 ──
-say "크론 등록 (시간당 relay + agent)"
-( crontab -l 2>/dev/null | grep -v "$DOMAIN/api/relay\|$DOMAIN/api/agent"; \
+# ── 7) 헬스체크 워치독 ──
+say "헬스체크 설치 (먹통 시 자동 재기동, 5분 주기)"
+install -m 755 "$APP_DIR/scripts/healthcheck.sh" /usr/local/bin/kweather-healthcheck.sh
+
+# ── 8) 크론 (시간당 갱신 + 5분 헬스체크) ──
+say "크론 등록 (시간당 relay + agent, 5분 헬스체크)"
+( crontab -l 2>/dev/null | grep -v "$DOMAIN/api/relay\|$DOMAIN/api/agent\|kweather-healthcheck"; \
   echo "0 * * * * curl -fsS https://$DOMAIN/api/relay >/dev/null 2>&1"; \
-  echo "30 * * * * curl -fsS https://$DOMAIN/api/agent >/dev/null 2>&1" ) | crontab -
+  echo "30 * * * * curl -fsS https://$DOMAIN/api/agent >/dev/null 2>&1"; \
+  echo "*/5 * * * * PORT=$PORT /usr/local/bin/kweather-healthcheck.sh" ) | crontab -
 ok "크론 등록"
 
 echo -e "\n\033[1;32m════════ 설치 완료 ════════\033[0m"
