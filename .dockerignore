@@ -1,0 +1,14 @@
+.git
+node_modules
+.secrets
+.vercel
+artifacts
+cache
+coverage
+coverage.json
+typechain-types
+reference
+.env
+deployments.*.json
+*.output
+npm-debug.log*

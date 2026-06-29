@@ -4,6 +4,7 @@
   "description": "K-Weather Premium API based on-chain weather data oracle infrastructure for the AIVM ecosystem",
   "license": "MIT",
   "scripts": {
+    "start": "node server.js",
     "compile": "hardhat compile",
     "test": "hardhat test",
     "demo": "hardhat run scripts/demo.js",

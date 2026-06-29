@@ -30,7 +30,7 @@ This repo is an **on-chain weather data marketplace for autonomous AI agents**. 
 
 - **MCP** (Claude / Cursor / Gemini): `mcp/server.mjs` — see [mcp/README.md](mcp/README.md).
   `buy_weather(city)` does the whole purchase+consume and returns the settlement receipt.
-- **HTTP REST**: discovery at [`/llms.txt`](https://kweather-aivm-oracle-wellbianlabs.vercel.app/llms.txt)
+- **HTTP REST**: discovery at [`/llms.txt`](https://agent.kweather.co.kr/llms.txt)
   and [`/openapi.json`]; `GET /api/catalog?q=`, `GET /api/quote`, `GET /api/weather`.
 
 ## Keyless pay-per-call (x402 / HTTP 402)
@@ -93,7 +93,7 @@ The autonomous agent (`GET /api/agent?product=<id>`) pays on-chain (subscribe + 
 settles via metered `queryLatest` or x402.
 
 ## Live
-- App: https://kweather-aivm-oracle-wellbianlabs.vercel.app
-- dApp: https://kweather-aivm-oracle-wellbianlabs.vercel.app/dapp
+- App: https://agent.kweather.co.kr
+- dApp: https://agent.kweather.co.kr/dapp
 - Chain: BNB Smart Chain testnet (97), explorer https://testnet.bscscan.com
 - Prices & contract addresses: `GET /api/quote`

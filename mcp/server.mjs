@@ -36,7 +36,7 @@ const CFG = {
   sm: process.env.SUBSCRIPTION_ADDRESS || "0xA34D6B699f16ed574A574a3E2b18ce063da4d911",
   oracle: process.env.ORACLE_ADDRESS || "0x2A2b4B6530ef062c80fCeEc23ae0d6167eAe9630",
   treasury: process.env.TREASURY || "0x77AC0aa9bE15b6272D54Df10Dc24EECAAc77f9db",
-  site: process.env.SITE_URL || "https://kweather-aivm-oracle-wellbianlabs.vercel.app",
+  site: process.env.SITE_URL || "https://agent.kweather.co.kr",
   agentKey: process.env.AGENT_PRIVATE_KEY || null,
 };
 

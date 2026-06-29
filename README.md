@@ -1,7 +1,10 @@
 # K-Weather AIVM 온체인 기상 데이터 오라클 인프라
 
-**🛰️ 라이브 데모: https://kweather-aivm-oracle-wellbianlabs.vercel.app**
-**⛓️ 온체인 dApp (BNB Smart Chain Testnet): https://kweather-aivm-oracle-wellbianlabs.vercel.app/dapp**
+**🛰️ 라이브 데모: https://agent.kweather.co.kr**
+**⛓️ 온체인 dApp (BNB Smart Chain Testnet): https://agent.kweather.co.kr/dapp**
+
+> **자체 서버 배포(이관):** Vercel 없이 케이웨더 자체 서버에서 `node server.js` 한 줄로 구동합니다
+> (웹 + API 단일 프로세스). Docker·nginx·TLS·도메인(`agent.kweather.co.kr`)·크론 설정은 **[DEPLOY.md](DEPLOY.md)** 참고.
 
 ### 배포된 컨트랙트 (BSC Testnet, chainId 97)
 | 컨트랙트 | 주소 |
@@ -213,7 +216,7 @@ MCP 도구: `pay_x402(city, asset?)`.
 쿼리 또는 x402로 정산됩니다.
 
 ```bash
-curl "https://kweather-aivm-oracle-wellbianlabs.vercel.app/api/decision?city=Jakarta&product=flood-watch"
+curl "https://agent.kweather.co.kr/api/decision?city=Jakarta&product=flood-watch"
 ```
 
 ## 보안 노트

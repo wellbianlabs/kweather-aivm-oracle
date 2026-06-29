@@ -5,8 +5,8 @@
 > queries on BNB Smart Chain testnet. Built for AI agents and "vibe coders" (Claude,
 > Gemini, Cursor, …) to discover, pay for, and use programmatically.
 
-Live app: https://kweather-aivm-oracle-wellbianlabs.vercel.app
-On-chain dApp: https://kweather-aivm-oracle-wellbianlabs.vercel.app/dapp
+Live app: https://agent.kweather.co.kr
+On-chain dApp: https://agent.kweather.co.kr/dapp
 Source: https://github.com/wellbianlabs/kweather-aivm-oracle
 
 ## What you can buy
