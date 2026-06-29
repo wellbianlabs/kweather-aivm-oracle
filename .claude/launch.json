@@ -8,10 +8,10 @@
       "port": 4321
     },
     {
-      "name": "weblive",
+      "name": "server",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["scripts/dev-server.cjs"],
-      "port": 4322
+      "runtimeArgs": ["server.js"],
+      "port": 8080
     }
   ]
 }

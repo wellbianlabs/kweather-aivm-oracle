@@ -288,6 +288,66 @@ function wireSearch() {
   box.addEventListener("focus", () => box.value && render(box.value));
 }
 
+// ---- showcase: real-life decision products (live /api/decision) ----
+const SHOWCASE_KR = [
+  { code: "1168064000", loc: ["서울 강남구 역삼1동", "Yeoksam, Gangnam · Seoul"], product: "retail-footfall", use: ["오피스 상권 유동인구 예측 → 매장 인력·재고 최적화", "Office-district footfall → staffing & stock"] },
+  { code: "1156054000", loc: ["서울 영등포구 여의동", "Yeouido, Seoul"], product: "autonomous-driving", use: ["도심 로보택시·자율주행 운행 가능성 판단", "Urban robotaxi / AV operating window"] },
+  { code: "1111051500", loc: ["서울 종로구 청운효자동", "Cheongun, Jongno · Seoul"], product: "air-quality-ops", use: ["미세먼지 기반 실외작업·등하교 안전 게이트", "PM-based outdoor-work / school safety gate"] },
+  { code: "1171062000", loc: ["서울 송파구 가락본동", "Garak, Songpa · Seoul"], product: "cold-chain", use: ["농수산물 도매시장 콜드체인 변질 위험", "Wholesale-market cold-chain risk"] },
+  { code: "2635051000", loc: ["부산 해운대구 우제1동", "Haeundae · Busan"], product: "tourism-comfort", use: ["해변 관광 쾌적도 → 숙박·입장 동적 가격", "Beach tourism comfort → dynamic pricing"] },
+  { code: "5011025300", loc: ["제주 제주시 애월읍", "Aewol, Jeju"], product: "marine-ops", use: ["연안 어선·양식장 출항 안전 판단", "Coastal fishing / aquaculture sailing"] },
+  { code: "5176038000", loc: ["강원 평창군 대관령면", "Daegwallyeong, Pyeongchang"], product: "snow-ops", use: ["고지대 적설 → 제설차 투입·도로 통제", "Highland snow → plow dispatch / road control"] },
+  { code: "5273031000", loc: ["전북 무주군 무풍면", "Mupung, Muju"], product: "frost-alert", use: ["고랭지 농작물 서리 경보 → 방상팬·피복", "Highland-crop frost alert → protection"] },
+];
+const SHOWCASE_WORLD = [
+  { code: "1642911", loc: ["인도네시아 자카르타", "Jakarta, Indonesia"], product: "flood-watch", use: ["열대 집중호우 → 침수 경보·파라메트릭 보험", "Tropical downpour → flood alert / parametric"] },
+  { code: "1850147", loc: ["일본 도쿄", "Tokyo, Japan"], product: "autonomous-driving", use: ["도심 자율주행 운행 가능성 판단", "Urban AV operating window"] },
+  { code: "1275339", loc: ["인도 뭄바이", "Mumbai, India"], product: "vector-risk", use: ["몬순기 모기 매개 감염병 방역", "Monsoon mosquito-borne disease control"] },
+  { code: "524901", loc: ["러시아 모스크바", "Moscow, Russia"], product: "heating-demand", use: ["한파 난방 수요 → 가스·전력 수급", "Cold-snap heating demand → grid/gas"] },
+  { code: "1796236", loc: ["중국 상하이", "Shanghai, China"], product: "marine-ops", use: ["항만·해상 운영 안전 판단", "Port / marine operations"] },
+  { code: "3448439", loc: ["브라질 상파울루", "São Paulo, Brazil"], product: "wind-dispatch", use: ["풍력 발전 급전·출력 예측", "Wind-farm dispatch / output"] },
+];
+const SHOWCASE_CACHE = {}; // code|product -> { d, onchain, source }
+const SEV_ALERT = new Set(["WARNING", "EMERGENCY", "STORM", "HAZARD", "EXTREME", "EXTREME_HEAT", "EXTREME_COLD", "HEAVY_SNOW", "PORT_HOLD", "NO_FLY", "ICE", "ICING", "DISENGAGE", "RED_FLAG", "ADVERSE", "DROUGHT", "FROST", "PEAK", "HEAT_RISK", "FREEZE_RISK"]);
+const SEV_WARN = new Set(["WATCH", "CAUTION", "DEGRADED", "RESTRICT", "ELEVATED", "UNHEALTHY", "SNOW", "RISK", "SOFT", "HIGH", "MONITOR", "UNSETTLED", "HIGH_HEAT", "COLD", "FOG", "DRY", "WET", "LOW"]);
+const sevOf = (sig) => (SEV_ALERT.has(sig) ? "alert" : SEV_WARN.has(sig) ? "warn" : "ok");
+const L = (pair) => (window.KW && window.KW.lang === "en" ? pair[1] : pair[0]);
+
+function showcaseCard(sc) {
+  const r = SHOWCASE_CACHE[sc.code + "|" + sc.product];
+  const head = (emoji, prod) => `<div class="sc-head"><span class="sc-emoji">${emoji}</span><div><div class="sc-prod">${prod}</div><div class="sc-loc">${L(sc.loc)}</div></div></div>`;
+  if (!r || !r.d) {
+    return `<div class="sc-card">${head("⛓️", sc.product)}<div class="sc-use">${L(sc.use)}</div><div class="sc-result sev-warn"><span class="sc-act">${r === null ? t("데이터 없음", "no data") : t("불러오는 중…", "loading…")}</span></div></div>`;
+  }
+  const d = r.d;
+  return `<div class="sc-card">
+    ${head(d.emoji || "📊", d.name || sc.product)}
+    <div class="sc-use">${L(sc.use)}</div>
+    <div class="sc-result sev-${sevOf(d.signal)}"><span class="sc-sig">${d.signal}</span><span class="sc-act">${d.action}</span></div>
+    <div class="sc-rat">${d.rationale || ""}</div>
+    <div class="sc-tag"><span>${r.onchain ? t("온체인 ⛓️", "on-chain ⛓️") : t("라이브 피드", "live feed")}</span><code>${sc.product}</code></div>
+  </div>`;
+}
+function renderShowcase() {
+  const kr = document.getElementById("showcaseKR"), wd = document.getElementById("showcaseWorld");
+  if (kr) kr.innerHTML = SHOWCASE_KR.map(showcaseCard).join("");
+  if (wd) wd.innerHTML = SHOWCASE_WORLD.map(showcaseCard).join("");
+}
+async function loadShowcase() {
+  renderShowcase(); // loading state
+  const all = [...SHOWCASE_KR, ...SHOWCASE_WORLD];
+  await Promise.all(all.map(async (sc) => {
+    const key = sc.code + "|" + sc.product;
+    try {
+      const r = await fetch(`/api/decision?city=${encodeURIComponent(sc.code)}&product=${sc.product}`);
+      const j = await r.json();
+      const d = (j.decisions || [])[0];
+      SHOWCASE_CACHE[key] = d ? { d, onchain: !!j.onchain, source: j.source } : null;
+    } catch { SHOWCASE_CACHE[key] = null; }
+    renderShowcase();
+  }));
+}
+
 // ---- init ----
 async function init() {
   document.getElementById("ghLink").href = GH_URL;
@@ -303,7 +363,9 @@ async function init() {
   if (window.KW) window.KW.onLang(() => {
     DATA.source = DATA.real ? t("케이웨더 세계날씨", "K-Weather world weather") : t("MOCK (오프라인)", "MOCK (offline)");
     renderAll();
+    renderShowcase();
   });
   renderAll();
+  loadShowcase();
 }
 document.addEventListener("DOMContentLoaded", init);
