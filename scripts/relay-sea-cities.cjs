@@ -2,7 +2,7 @@
 // Publish REAL weather for Southeast-Asian cities to the on-chain oracle.
 // Pulls each city's latest observation from the live /api/weather (Open-Meteo real data),
 // scales floats -> fixed-point ints (same convention as api/relay.js), and pushBatch()es
-// them to KWeatherOracle in chunks. Signed by the deployer key (an authorized relayer).
+// them to the world oracle in chunks. Signed by the deployer key (an authorized relayer).
 //
 //   node scripts/relay-sea-cities.cjs [count|all] [chunk] [fetchConcurrency]
 //   count = how many top SE-Asia cities (default 50; "all" = every SE-Asia city)
@@ -13,7 +13,7 @@ const w = require("../.secrets/wallets.json");
 const dep = require("../deployments.bscTestnet.json");
 const { scaleObs, ORACLE_TUPLE } = require("../lib/world-scale");
 
-const SITE = process.env.SITE_URL || "https://kweather-aivm-oracle-wellbianlabs.vercel.app";
+const SITE = process.env.SITE_URL || "https://agent.kweather.co.kr";
 const RPC = process.env.RPC_URL || "https://bsc-testnet-rpc.publicnode.com";
 const ARG = process.argv[2] || "50";
 const COUNT = ARG === "all" ? Infinity : Number(ARG);

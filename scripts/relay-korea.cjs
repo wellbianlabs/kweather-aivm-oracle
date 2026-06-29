@@ -8,7 +8,7 @@ const w = require("../.secrets/wallets.json");
 const dep = require("../deployments.korea.bscTestnet.json");
 const { scaleObs, KOREA_TUPLE } = require("../lib/korea-scale");
 
-const SITE = process.env.SITE_URL || "https://kweather-aivm-oracle-wellbianlabs.vercel.app";
+const SITE = process.env.SITE_URL || "https://agent.kweather.co.kr";
 const RPC = process.env.RPC_URL || "https://bsc-testnet-rpc.publicnode.com";
 const ARG = String(process.argv[2] || "11");
 const CHUNK = Number(process.argv[3] || 15);

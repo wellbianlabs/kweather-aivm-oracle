@@ -8,7 +8,7 @@
 //   GET /api/decision?code=&lat=&lon=         -> by coordinates
 //
 // Decisions are derived from the on-chain oracle data; settling/consuming the
-// underlying feed is metered on-chain (KWeatherOracle.queryLatest) or via x402.
+// underlying feed is metered on-chain (oracle.queryLatest) or via x402.
 const { ethers } = require("ethers");
 const DP = require("../lib/decision-products");
 const CITIES = require("../lib/cities.json");
@@ -100,7 +100,7 @@ module.exports = async (req, res) => {
       samples: history.length,
       observation: latest,
       decisions: products,
-      settlement: { feed: "KWeatherOracle.queryLatest (metered) or x402 /api/paid-weather", oracle: oracleAddr },
+      settlement: { feed: "oracle.queryLatest (metered) or x402 /api/paid-weather", oracle: oracleAddr },
     });
   } catch (e) {
     return res.status(502).json({ error: String((e && e.shortMessage) || (e && e.message) || e) });

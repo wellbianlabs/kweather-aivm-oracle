@@ -13,7 +13,7 @@ contract SubscriptionManager {
     IERC20 public immutable token;
     address public owner;
     address public treasury;
-    address public oracle; // authorized consumer (KWeatherOracle)
+    address public oracle; // authorized consumer (the weather oracle contract)
 
     uint256 public constant PERIOD = 30 days;
 

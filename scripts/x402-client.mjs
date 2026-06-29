@@ -11,7 +11,7 @@
 import { ethers } from "ethers";
 import { readFileSync } from "node:fs";
 
-const SITE = process.env.SITE_URL || "https://kweather-aivm-oracle-wellbianlabs.vercel.app";
+const SITE = process.env.SITE_URL || "https://agent.kweather.co.kr";
 let key = process.env.PAYER_KEY;
 if (!key) key = JSON.parse(readFileSync(new URL("../.secrets/wallets.json", import.meta.url))).agent.privateKey;
 const wallet = new ethers.Wallet(key);

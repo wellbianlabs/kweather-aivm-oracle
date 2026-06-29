@@ -6,7 +6,7 @@ const { ethers } = require("ethers");
 const path = require("path");
 const w = require("../.secrets/wallets.json");
 
-const HOST = "kweather-aivm-oracle-wellbianlabs.vercel.app"; // delivery fetch -> live weather
+const HOST = process.env.SITE_HOST || "agent.kweather.co.kr"; // delivery fetch -> live weather
 const RPC = process.env.RPC_URL || "https://bsc-testnet-rpc.publicnode.com";
 process.env.RPC_URL = RPC;
 process.env.RELAYER_PRIVATE_KEY = w.relayer.privateKey; // settler (pays gas)

@@ -7,10 +7,10 @@
     "start": "node server.js",
     "compile": "hardhat compile",
     "test": "hardhat test",
-    "demo": "hardhat run scripts/demo.js",
-    "deploy:local": "hardhat run scripts/deploy.js --network localhost",
-    "node": "hardhat node",
-    "relayer": "node scripts/relayer-service.js"
+    "deploy:base": "hardhat run scripts/deploy-testnet.js --network bscTestnet",
+    "deploy:world": "hardhat run scripts/deploy-world-oracle.js --network bscTestnet",
+    "deploy:korea": "hardhat run scripts/deploy-korea.js --network bscTestnet",
+    "node": "hardhat node"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",

@@ -1,9 +1,10 @@
 "use strict";
 
 /**
- * Deploy the full oracle stack to a public testnet (Base Sepolia by default), wire it,
- * fund the relayer + agent bot wallets, pre-mint KWT to the agent, and emit a frontend
- * config (web/dapp-config.js) + deployments.<network>.json.
+ * Bootstrap the base stack on BNB Smart Chain testnet: deploy KWT (ERC-20) +
+ * SubscriptionManager, fund the relayer + agent wallets, pre-mint KWT, and emit a frontend
+ * config (web/dapp-config.js) + deployments.<network>.json. Oracles are deployed next by
+ * scripts/deploy-world-oracle.js (world) and scripts/deploy-korea.js (Korea).
  *
  *   npx hardhat run scripts/deploy-testnet.js --network baseSepolia
  */
@@ -49,12 +50,8 @@ async function main() {
     await token.getAddress(), deployer.address, monthlyPrice, queriesPerMonth, pricePerQuery
   );
   await sm.waitForDeployment();
-  const oracle = await (await ethers.getContractFactory("KWeatherOracle")).deploy(await sm.getAddress());
-  await oracle.waitForDeployment();
-
-  await (await sm.setOracle(await oracle.getAddress())).wait();
-  await (await oracle.setRelayer(relayerAddr, true)).wait();
-  console.log("  wired: setOracle + setRelayer(relayer)");
+  // Oracles are deployed separately and wire SubscriptionManager.setOracle + relayer themselves:
+  //   scripts/deploy-world-oracle.js (KWeatherWorldOracle) · scripts/deploy-korea.js (KWeatherKoreaOracle)
 
   // pre-mint KWT: agent bot + deployer (for testing)
   await (await token.mint(agentAddr, 5000n * ONE)).wait();
@@ -75,7 +72,7 @@ async function main() {
   const addrs = {
     token: await token.getAddress(),
     subscriptionManager: await sm.getAddress(),
-    oracle: await oracle.getAddress(),
+    oracle: "", // filled by scripts/deploy-world-oracle.js
   };
   const chain = CHAINS[net] || { chainId: wallets.chainId, name: net, rpc: process.env.RPC_URL || "", explorer: "", currency: "ETH" };
   const explorer = chain.explorer;
@@ -115,12 +112,12 @@ window.DAPP_CONFIG = ${JSON.stringify(
 `;
   fs.writeFileSync(path.join(__dirname, "..", "web", "dapp-config.js"), cfg);
 
-  console.log("\nDeployed:");
+  console.log("\nDeployed (base):");
   console.log(`  KWT  ${out.token}`);
   console.log(`  SubscriptionManager  ${out.subscriptionManager}`);
-  console.log(`  KWeatherOracle       ${out.oracle}`);
-  console.log(`  explorer: ${explorer}/address/${out.oracle}`);
+  console.log(`  explorer: ${explorer}/address/${out.subscriptionManager}`);
   console.log("\nWrote deployments + web/dapp-config.js");
+  console.log("Next: scripts/deploy-world-oracle.js (world) · scripts/deploy-korea.js (Korea)");
 }
 
 main().catch((e) => { console.error(e); process.exitCode = 1; });
