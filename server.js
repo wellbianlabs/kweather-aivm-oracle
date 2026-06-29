@@ -67,8 +67,11 @@ const server = http.createServer(async (req, res) => {
   if (!fs.existsSync(file) && fs.existsSync(file + ".html")) file += ".html";
   fs.readFile(file, (err, data) => {
     if (err) { res.statusCode = 404; res.setHeader("Content-Type", "text/plain; charset=utf-8"); return res.end("404 Not Found"); }
-    res.setHeader("Content-Type", MIME[path.extname(file)] || "application/octet-stream");
-    res.setHeader("Cache-Control", path.extname(file) === ".html" ? "no-cache" : "public, max-age=600");
+    const ext = path.extname(file);
+    res.setHeader("Content-Type", MIME[ext] || "application/octet-stream");
+    // code/markup must revalidate so deploys reflect immediately; cache static assets (fonts/images/json)
+    const revalidate = ext === ".html" || ext === ".js" || ext === ".css";
+    res.setHeader("Cache-Control", revalidate ? "no-cache" : "public, max-age=600");
     res.end(data);
   });
 });

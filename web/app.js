@@ -313,19 +313,34 @@ const SEV_WARN = new Set(["WATCH", "CAUTION", "DEGRADED", "RESTRICT", "ELEVATED"
 const sevOf = (sig) => (SEV_ALERT.has(sig) ? "alert" : SEV_WARN.has(sig) ? "warn" : "ok");
 const L = (pair) => (window.KW && window.KW.lang === "en" ? pair[1] : pair[0]);
 
+const PRODUCT_ICON = {
+  "retail-footfall": "i-retail", "autonomous-driving": "i-car", "air-quality-ops": "i-mask",
+  "cold-chain": "i-thermo", "tourism-comfort": "i-sun", "marine-ops": "i-anchor",
+  "snow-ops": "i-snow", "powerline-icing": "i-snow", "frost-alert": "i-sprout",
+  "flood-watch": "i-flood", "vector-risk": "i-pulse", "heating-demand": "i-flame",
+  "heat-demand-response": "i-flame", "wind-dispatch": "i-turbine", "drone-ops": "i-turbine",
+};
+const iconOf = (pid) => PRODUCT_ICON[pid] || "i-gauge";
+const SEV_ICON = { ok: "i-ok", warn: "i-warn", alert: "i-alert" };
+const svgUse = (id, cls) => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true"><use href="#${id}"/></svg>`;
+
 function showcaseCard(sc) {
   const r = SHOWCASE_CACHE[sc.code + "|" + sc.product];
-  const head = (emoji, prod) => `<div class="sc-head"><span class="sc-emoji">${emoji}</span><div><div class="sc-prod">${prod}</div><div class="sc-loc">${L(sc.loc)}</div></div></div>`;
+  const head = (prod) => `<div class="sc-head"><span class="sc-ic">${svgUse(iconOf(sc.product), "")}</span><div><div class="sc-prod">${prod}</div><div class="sc-loc">${L(sc.loc)}</div></div></div>`;
   if (!r || !r.d) {
-    return `<div class="sc-card">${head("⛓️", sc.product)}<div class="sc-use">${L(sc.use)}</div><div class="sc-result sev-warn"><span class="sc-act">${r === null ? t("데이터 없음", "no data") : t("불러오는 중…", "loading…")}</span></div></div>`;
+    return `<div class="sc-card">${head(sc.product)}<div class="sc-use">${L(sc.use)}</div><div class="sc-result sev-warn"><span class="sc-act">${r === null ? t("데이터 없음", "no data") : t("불러오는 중…", "loading…")}</span></div></div>`;
   }
   const d = r.d;
+  const sev = sevOf(d.signal);
   return `<div class="sc-card">
-    ${head(d.emoji || "📊", d.name || sc.product)}
+    ${head(d.name || sc.product)}
     <div class="sc-use">${L(sc.use)}</div>
-    <div class="sc-result sev-${sevOf(d.signal)}"><span class="sc-sig">${d.signal}</span><span class="sc-act">${d.action}</span></div>
+    <div class="sc-result sev-${sev}">
+      <div class="sc-sigrow">${svgUse(SEV_ICON[sev], "sc-sevic")}<span class="sc-sig">${d.signal}</span></div>
+      <span class="sc-act">${d.action}</span>
+    </div>
     <div class="sc-rat">${d.rationale || ""}</div>
-    <div class="sc-tag"><span>${r.onchain ? t("온체인 ⛓️", "on-chain ⛓️") : t("라이브 피드", "live feed")}</span><code>${sc.product}</code></div>
+    <div class="sc-tag"><span>${r.onchain ? t("온체인 · on-chain", "on-chain") : t("라이브 피드", "live feed")}</span><code>${sc.product}</code></div>
   </div>`;
 }
 function renderShowcase() {
