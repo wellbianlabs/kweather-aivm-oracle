@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Agent Activity — KWeather × AIVM (live on-chain)</title>
+  <meta name="description" content="Real-time, transparent dashboard of which AI agents buy and consume on-chain weather data — read straight from the open contracts. A market for AI agents, not humans." />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=2" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2338bdf8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><path d='M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18'/></svg>" />
+  <style>
+    .dapp { max-width: 1180px; margin: 0 auto; padding: 0 24px 60px; }
+    .card-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 22px; }
+    .panel h3 { font-size: 15px; margin-bottom: 14px; }
+    .panel .hint { font-size: 12.5px; color: var(--muted); margin-bottom: 12px; }
+    .kv { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; padding: 6px 0; border-bottom: 1px solid rgba(120,150,210,.08); }
+    .kv:last-child { border-bottom: none; }
+    .kv .k { color: var(--muted); } .kv .v { font-family: var(--mono); font-weight: 600; text-align: right; }
+    .big { font-size: 38px; font-weight: 800; letter-spacing: -0.02em; line-height: 1; }
+    .sub { font-size: 12px; color: var(--muted); margin-top: 6px; }
+    a.ext { color: var(--brand); text-decoration: none; } a.ext:hover { text-decoration: underline; }
+    .addr { font-family: var(--mono); font-size: 11.5px; color: var(--brand-2); }
+    .ok { color: var(--accent); } .warn { color: var(--warn); } .bad { color: var(--danger); }
+    .bars { display: flex; align-items: flex-end; gap: 3px; height: 80px; margin-top: 8px; }
+    .bars span { flex: 1; background: linear-gradient(180deg, var(--brand), var(--brand-2)); border-radius: 3px 3px 0 0; min-height: 2px; opacity: .85; }
+    .feed { font-family: var(--mono); font-size: 12px; max-height: 360px; overflow-y: auto; }
+    .feed .row { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid rgba(120,150,210,.08); }
+    .pill { font-size: 10.5px; padding: 2px 7px; border-radius: 6px; border: 1px solid var(--line); color: var(--muted); }
+    .pill.sub { color: var(--accent); border-color: rgba(52,211,153,.3); }
+    .pill.pre { color: var(--warn); border-color: rgba(251,191,36,.3); }
+    @media (max-width: 860px) { .card-grid, .stat-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <header class="nav">
+    <div class="nav-inner">
+      <div class="brand"><span class="brand-text">KWeather <span class="x">×</span> AIVM <span class="brand-sub">Agent Activity</span></span></div>
+      <nav class="nav-links">
+        <a href="/dapp">← dApp</a>
+        <a href="/admin">Admin</a>
+        <a href="/">Home</a>
+        <button id="refreshBtn" class="lang-btn" type="button">새로고침 · Refresh</button>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero" style="padding-bottom:14px">
+    <div class="hero-badge"><span class="dot"></span> <span>실시간 · 공개 컨트랙트에서 직접 집계 · live from open contracts</span></div>
+    <h1 style="font-size:clamp(24px,4vw,38px)">AI 에이전트 활동 <span class="grad">Agent Activity</span></h1>
+    <p class="hero-sub">이 마켓의 고객은 사람이 아니라 <b>AI 에이전트</b>입니다. 지난 24시간 동안 어떤 에이전트가 접속해 어떤 날씨 데이터를 얼마나 구매·사용했는지를, 오라클의 공개 이벤트(<span class="mono">WeatherQueried</span>)에서 실시간·투명하게 보여줍니다. <span class="sub">A market for AI agents — every purchase is a public on-chain event.</span></p>
+  </section>
+
+  <main class="dapp">
+    <div class="stat-grid">
+      <div class="panel"><div class="big" id="sAgents">—</div><div class="sub">24h 활동 AI 에이전트 · unique AI agents</div></div>
+      <div class="panel"><div class="big" id="sQueries">—</div><div class="sub">24h 데이터 구매(온체인 쿼리) · data purchases</div></div>
+      <div class="panel"><div class="big" id="sModes">—</div><div class="sub">결제 방식 · 구독 / 종량제 split</div></div>
+    </div>
+    <div class="panel" style="margin-bottom:16px"><h3>⏱️ 24시간 타임라인 · hourly purchases</h3><div class="bars" id="bars"></div><div class="sub" id="barsNote" style="margin-top:8px">—</div></div>
+    <div class="card-grid">
+      <div class="panel"><h3>🤖 상위 AI 에이전트 · top agents</h3><div id="topAgents" class="hint">불러오는 중…</div></div>
+      <div class="panel"><h3>📦 가장 많이 구매된 데이터 · top regions</h3><div id="topRegions" class="hint">불러오는 중…</div></div>
+    </div>
+    <div class="panel" style="margin-top:16px"><h3>📡 실시간 구매 피드 · live purchase feed</h3><div class="hint">에이전트 → 구매한 지역 → 결제방식 → 시각 (각 항목은 온체인 트랜잭션)</div><div class="feed" id="feed">불러오는 중…</div></div>
+    <p class="sub" id="meta" style="margin-top:14px">—</p>
+  </main>
+
+  <script src="dapp-config.js"></script>
+  <script src="agents.js?v=1"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "K-Weather × AIVM Oracle",
+  "name_for_model": "kweather_aivm_oracle",
+  "description_for_human": "On-chain weather data + 25 autonomous decision agents for 4,255 world cities and 3,561 Korea dong. Built for AI agents.",
+  "description_for_model": "A market FOR AI AGENTS (not humans) to buy and consume real-time weather data on-chain (BNB Smart Chain). Coverage: 4,255 world cities (GeoNames id) + 3,561 Korea 법정동(dong) including PM10/PM2.5. 25 autonomous decision agents (energy, logistics, insurance, safety, agriculture, mobility, public-health, grid, utilities) that perceive a 24h on-chain series, analyze trend, and decide with a confidence. Payment: keyless pay-per-call via x402 (HTTP 402; USDT or x402USD; gasless EIP-3009 or Uniswap Permit2), or KWT subscription / pay-per-query. KEY ENDPOINTS (base https://agent.kweather.co.kr): GET /api/catalog?q=<name> (search cities/dong) · GET /api/weather?code=<id> (free preview) · GET /api/decision (agent catalog; add ?city=&product= to run an agent → signal/action/score/confidence/trend) · GET /api/paid-weather?city= (x402 402-flow) · GET /api/agents (live 24h AI-agent activity, public) · GET /api/quote (pricing/contracts). Also exposed as an MCP server (mcp/server.mjs). Discovery: /llms.txt and /openapi.json.",
+  "auth": { "type": "none" },
+  "api": { "type": "openapi", "url": "https://agent.kweather.co.kr/openapi.json" },
+  "logo_url": "https://agent.kweather.co.kr/favicon.ico",
+  "contact_email": "admin@wellbianlabs.io",
+  "legal_info_url": "https://agent.kweather.co.kr/"
+}

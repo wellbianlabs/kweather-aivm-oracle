@@ -80,6 +80,18 @@ GET /api/paid-weather?city=Tokyo with NO API key:
 Price: 0.01 / call in the chosen asset. Reference client: scripts/x402-client.mjs ("Tokyo" [asset]).
 MCP tool: pay_x402(city, asset?).
 
+## For AI agents (this market is FOR agents, not humans)
+- 25 decision agents: GET /api/decision lists them (id, name, sector, role, cadence, action). Run one with
+  ?city=<id|name>&product=<id> — returns { signal, action, score, confidence, trend }. Each agent perceives
+  the region's 24h on-chain series, analyzes trend + multi-factor, and decides with a confidence.
+- Live transparency: GET /api/agents — last 24h of AI-agent purchases aggregated from the public on-chain
+  `WeatherQueried(agent, regionCode, mode)` events (unique agents, totals, top agents/regions, recent feed).
+  Human-readable dashboard at /agents.
+- Discovery (AEO): /.well-known/ai-plugin.json (OpenAI-plugin manifest) and /.well-known/agents.json
+  (agent manifest: capabilities, endpoints, pricing, chain, MCP). CORS is open on all /api/* endpoints.
+
 ## Machine-readable
 - /openapi.json — OpenAPI 3 spec of the REST API
 - /api/quote — live pricing and contract addresses
+- /api/agents — live 24h AI-agent activity (public on-chain events)
+- /.well-known/ai-plugin.json · /.well-known/agents.json — agent discovery manifests

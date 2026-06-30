@@ -1,0 +1,50 @@
+{
+  "$schema": "https://agent.kweather.co.kr/.well-known/agents.json",
+  "name": "K-Weather × AIVM On-chain Weather Oracle",
+  "summary": "A market FOR AI agents: buy and consume real-time on-chain weather data, and run 25 autonomous decision agents. Every purchase is a public on-chain event.",
+  "audience": "ai-agents",
+  "base_url": "https://agent.kweather.co.kr",
+  "discovery": {
+    "llms_txt": "https://agent.kweather.co.kr/llms.txt",
+    "openapi": "https://agent.kweather.co.kr/openapi.json",
+    "ai_plugin": "https://agent.kweather.co.kr/.well-known/ai-plugin.json",
+    "mcp_server": "mcp/server.mjs (kweather-aivm-oracle)"
+  },
+  "data": {
+    "world_cities": 4255,
+    "korea_dong": 3561,
+    "source": "K-Weather (세계날씨 kw-world-r1/3d1, 국내 kw-odam1 + kw-dust-r1)",
+    "fields_world": ["temperature", "senseTemp", "humidity", "precipitation", "windSpeed", "windDirection", "pressure", "visibility", "snowfall", "discomfortIndex"],
+    "fields_korea_extra": ["pm10", "pm25"]
+  },
+  "agents": {
+    "count": 25,
+    "list_endpoint": "https://agent.kweather.co.kr/api/decision",
+    "run_endpoint": "https://agent.kweather.co.kr/api/decision?city={id}&product={agentId}",
+    "model": "perceive 24h on-chain series -> trend + multi-factor analysis -> decision { signal, action, score, confidence, trend }"
+  },
+  "payments": {
+    "x402": { "endpoint": "https://agent.kweather.co.kr/api/paid-weather?city={name}", "scheme": "HTTP 402 exact", "assets": ["x402USD", "USDT"], "rails": ["EIP-3009 gasless", "Uniswap Permit2"] },
+    "kwt": { "token": "0x04090599Dbaa990eabC37fFBDE223A4eD02e5b20", "subscription": "100 KWT/mo (1,000 queries)", "pay_per_query": "1 KWT" }
+  },
+  "endpoints": [
+    { "method": "GET", "path": "/api/catalog?q=", "desc": "search cities + Korea dong" },
+    { "method": "GET", "path": "/api/weather?code=", "desc": "free real-time preview" },
+    { "method": "GET", "path": "/api/decision?city=&product=", "desc": "run decision agent(s)" },
+    { "method": "GET", "path": "/api/paid-weather?city=", "desc": "x402 keyless pay-per-call" },
+    { "method": "GET", "path": "/api/agents", "desc": "live 24h AI-agent activity (public, transparent)" },
+    { "method": "GET", "path": "/api/quote", "desc": "pricing + contract addresses" }
+  ],
+  "chain": {
+    "name": "BNB Smart Chain Testnet",
+    "chainId": 97,
+    "explorer": "https://testnet.bscscan.com",
+    "world_oracle": "0x2A2b4B6530ef062c80fCeEc23ae0d6167eAe9630",
+    "korea_oracle": "0xb303D062e079365479513a951777a35a353b32de"
+  },
+  "transparency": {
+    "activity_api": "https://agent.kweather.co.kr/api/agents",
+    "activity_dashboard": "https://agent.kweather.co.kr/agents",
+    "note": "Agents are billed via metered on-chain queryLatest emitting public WeatherQueried(agent, regionCode, mode) events."
+  }
+}

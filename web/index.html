@@ -13,6 +13,21 @@
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css?v=2" />
+  <link rel="ai-plugin" href="/.well-known/ai-plugin.json" />
+  <meta name="robots" content="index, follow" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebAPI",
+    "name": "K-Weather × AIVM On-chain Weather Oracle",
+    "description": "A market for AI agents: real-time on-chain weather data for 4,255 world cities + 3,561 Korea dong (incl. PM10/PM2.5), with 25 autonomous decision agents. Pay-per-call via x402 (USDT) or KWT subscription.",
+    "url": "https://agent.kweather.co.kr",
+    "documentation": "https://agent.kweather.co.kr/llms.txt",
+    "provider": { "@type": "Organization", "name": "K-Weather × AIVM" },
+    "audience": { "@type": "Audience", "audienceType": "AI agents" },
+    "potentialAction": { "@type": "SearchAction", "target": "https://agent.kweather.co.kr/api/catalog?q={query}", "query-input": "required name=query" }
+  }
+  </script>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2338bdf8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><path d='M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18'/></svg>" />
 </head>
 <body>
@@ -62,6 +77,7 @@
         <a href="#pipeline" data-en="Pipeline">파이프라인</a>
         <a href="#feed" data-en="Live feed">라이브 피드</a>
         <a href="#agents" data-en="AI agents · decisions">AI 에이전트 · 의사결정</a>
+        <a href="/agents" data-en="Agent activity ↗">에이전트 활동 ↗</a>
         <a href="#money" data-en="Monetization">수익화</a>
         <a href="/dapp" class="nav-gh" style="background:linear-gradient(135deg,#34d399,#10b981)" data-en="On-chain dApp ↗">온체인 dApp ↗</a>
         <a id="ghLink" class="nav-gh" href="#" target="_blank" rel="noopener">GitHub ↗</a>

@@ -93,6 +93,29 @@ function contracts() {
     link("KWT 토큰 · token", CFG.token);
 }
 
+// ── admin gate: only the owner/treasury wallet may view this page ──
+const ADMIN_ALLOW = [TREASURY.toLowerCase()]; // owner wallet = admin
+
+function reveal() {
+  $("adminGate").style.display = "none";
+  $("adminContent").style.display = "block";
+  $("refreshBtn").style.display = "";
+  $("disconnectBtn").style.display = "";
+  loadAll();
+}
+function deny(addr) {
+  $("gateMsg").innerHTML = `<span class="bad">접근 권한 없음 · access denied</span><br>연결된 지갑 <span class="addr">${addr.slice(0, 6)}…${addr.slice(-4)}</span> 은 관리자가 아닙니다. 관리자(소유자) 지갑으로 연결하세요.`;
+}
+async function connectAdmin() {
+  if (!window.ethereum) { $("gateMsg").innerHTML = '<span class="warn">MetaMask 등 EVM 지갑이 필요합니다 · an EVM wallet is required.</span>'; return; }
+  $("gateMsg").textContent = "연결 중… · connecting…";
+  try {
+    const bp = new ethers.BrowserProvider(window.ethereum);
+    await bp.send("eth_requestAccounts", []);
+    const addr = await (await bp.getSigner()).getAddress();
+    if (ADMIN_ALLOW.includes(addr.toLowerCase())) reveal(); else deny(addr);
+  } catch (e) { $("gateMsg").innerHTML = `<span class="bad">${String((e && (e.shortMessage || e.message)) || e).slice(0, 90)}</span>`; }
+}
 function loadAll() {
   if (!CFG) { $("coverage").innerHTML = '<span class="warn">미배포 · not deployed</span>'; return; }
   provider = new ethers.JsonRpcProvider(CFG.rpc);
@@ -100,7 +123,13 @@ function loadAll() {
   coverage(); settlement(); wallets(); pricing(); contracts();
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  $("gateConnect").addEventListener("click", connectAdmin);
   $("refreshBtn").addEventListener("click", loadAll);
-  loadAll();
+  $("disconnectBtn").addEventListener("click", () => location.reload());
+  // silent unlock if the owner wallet is already connected
+  if (window.ethereum) {
+    try { const a = await window.ethereum.request({ method: "eth_accounts" }); if (a && a[0] && ADMIN_ALLOW.includes(a[0].toLowerCase())) reveal(); } catch (_) {}
+    window.ethereum.on && window.ethereum.on("accountsChanged", () => location.reload());
+  }
 });
