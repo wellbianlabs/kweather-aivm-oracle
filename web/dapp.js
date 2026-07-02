@@ -84,13 +84,16 @@ function initReadOnly() {
 async function refreshStatus() {
   try {
     const regions = await roWorldOracle.getRegions();
+    // keep it light + resilient: only a handful of regions, and one failed read never breaks the panel
     const rows = await Promise.all(
-      regions.slice(0, 60).map(async (code) => {
-        const cnt = await roWorldOracle.observationCount(code);
-        let temp = "—", ts = 0;
-        if (cnt > 0n) { const d = unscale(await roWorldOracle.peekLatest(code)); temp = d.temperature.toFixed(1) + "℃"; ts = d.timestamp; }
-        const when = ts ? fmtShort(ts) : t("데이터 없음", "no data");
-        return `<div class="kv"><span class="k">${cityName(code)} <span class="addr">#${cnt}</span></span><span class="v">${temp} <span class="addr">${when}</span></span></div>`;
+      regions.slice(0, 12).map(async (code) => {
+        try {
+          const cnt = await roWorldOracle.observationCount(code);
+          let temp = "—", ts = 0;
+          if (cnt > 0n) { const d = unscale(await roWorldOracle.peekLatest(code)); temp = d.temperature.toFixed(1) + "℃"; ts = d.timestamp; }
+          const when = ts ? fmtShort(ts) : t("데이터 없음", "no data");
+          return `<div class="kv"><span class="k">${cityName(code)} <span class="addr">#${cnt}</span></span><span class="v">${temp} <span class="addr">${when}</span></span></div>`;
+        } catch (_) { return ""; }
       })
     );
     $("statusBody").innerHTML =
