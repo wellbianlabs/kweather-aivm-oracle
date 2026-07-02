@@ -1,0 +1,48 @@
+# K-Weather × AIVM — on-chain weather data + 25 autonomous decision agents, built FOR AI agents.
+# AI crawlers, agents and "vibe coders" are explicitly welcome. Start here: /llms.txt
+
+User-agent: *
+Allow: /
+
+# LLM / AI search + agent crawlers (explicit allow)
+User-agent: GPTBot
+Allow: /
+User-agent: OAI-SearchBot
+Allow: /
+User-agent: ChatGPT-User
+Allow: /
+User-agent: ClaudeBot
+Allow: /
+User-agent: Claude-Web
+Allow: /
+User-agent: Claude-SearchBot
+Allow: /
+User-agent: anthropic-ai
+Allow: /
+User-agent: PerplexityBot
+Allow: /
+User-agent: Perplexity-User
+Allow: /
+User-agent: Google-Extended
+Allow: /
+User-agent: Applebot-Extended
+Allow: /
+User-agent: Bingbot
+Allow: /
+User-agent: CCBot
+Allow: /
+User-agent: Bytespider
+Allow: /
+User-agent: Amazonbot
+Allow: /
+User-agent: cohere-ai
+Allow: /
+
+# Machine-readable entry points
+# Agent guide:   https://agent.kweather.co.kr/llms.txt
+# OpenAPI spec:  https://agent.kweather.co.kr/openapi.json
+# AI plugin:     https://agent.kweather.co.kr/.well-known/ai-plugin.json
+# Agent manifest:https://agent.kweather.co.kr/.well-known/agents.json
+# Live activity: https://agent.kweather.co.kr/api/agents
+
+Sitemap: https://agent.kweather.co.kr/sitemap.xml
